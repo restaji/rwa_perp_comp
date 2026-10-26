@@ -512,7 +512,11 @@ export class FeeComparator {
         continue;
       }
       const slippage = finite(exData.slippage_bps);
-      const effectiveSpread = name === "avantis" ? slippage : 2 * slippage;
+      const effectiveSpread =
+        name === "avantis"
+          ? slippage
+          : finite(exData.opening_slippage_bps) +
+            finite(exData.closing_slippage_bps);
       const fOpen = fees.open;
       const fClose = fees.close;
       if (fOpen === null || fClose === null) continue;

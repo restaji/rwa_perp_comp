@@ -3,6 +3,7 @@ import { floorLeverage } from "../models";
 
 const BASE = "https://omni.variational.io";
 const SETTLEMENT_ASSET = "USDC";
+const REF_QTY = 0.001;
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -25,6 +26,45 @@ const CHROME_CIPHERS = [
   "AES256-SHA",
 ].join(":");
 
+let sharedH2Session: http2.ClientHttp2Session | null = null;
+
+function getH2Session(): http2.ClientHttp2Session {
+  if (
+    sharedH2Session &&
+    !sharedH2Session.closed &&
+    !sharedH2Session.destroyed
+  ) {
+    return sharedH2Session;
+  }
+  const session = http2.connect(BASE, {
+    ciphers: CHROME_CIPHERS,
+    ecdhCurve: "X25519:P-256:P-384",
+    minVersion: "TLSv1.2",
+    maxVersion: "TLSv1.3",
+  });
+  session.on("error", () => {
+    try {
+      session.destroy();
+    } catch {
+      // ignore
+    }
+    if (sharedH2Session === session) sharedH2Session = null;
+  });
+  session.on("close", () => {
+    if (sharedH2Session === session) sharedH2Session = null;
+  });
+  session.setTimeout(30_000, () => {
+    try {
+      session.close();
+    } catch {
+      // ignore
+    }
+    if (sharedH2Session === session) sharedH2Session = null;
+  });
+  sharedH2Session = session;
+  return session;
+}
+
 function h2RequestJson(
   method: "GET" | "POST",
   path: string,
@@ -34,34 +74,20 @@ function h2RequestJson(
 ): Promise<Record<string, any> | null> {
   return new Promise((resolve) => {
     let settled = false;
-    const finish = (val: Record<string, any> | null, client?: http2.ClientHttp2Session) => {
+    const finish = (val: Record<string, any> | null) => {
       if (settled) return;
       settled = true;
-      try {
-        client?.close();
-      } catch {
-        // ignore
-      }
       resolve(val);
     };
 
     let client: http2.ClientHttp2Session;
     try {
-      client = http2.connect(BASE, {
-        ciphers: CHROME_CIPHERS,
-        ecdhCurve: "X25519:P-256:P-384",
-        minVersion: "TLSv1.2",
-        maxVersion: "TLSv1.3",
-      });
+      client = getH2Session();
     } catch {
       return finish(null);
     }
 
-    const timer = setTimeout(() => finish(null, client), timeoutMs);
-    client.on("error", () => {
-      clearTimeout(timer);
-      finish(null, client);
-    });
+    const timer = setTimeout(() => finish(null), timeoutMs);
 
     const bodyStr = bodyObj ? JSON.stringify(bodyObj) : "";
     const headers: http2.OutgoingHttpHeaders = {
@@ -102,17 +128,17 @@ function h2RequestJson(
       req.on("end", () => {
         clearTimeout(timer);
         if (status !== 200 || !raw) {
-          return finish(null, client);
+          return finish(null);
         }
         try {
-          finish(JSON.parse(raw), client);
+          finish(JSON.parse(raw));
         } catch {
-          finish(null, client);
+          finish(null);
         }
       });
       req.on("error", () => {
         clearTimeout(timer);
-        finish(null, client);
+        finish(null);
       });
 
       if (method === "POST" && bodyStr) {
@@ -121,7 +147,7 @@ function h2RequestJson(
       req.end();
     } catch {
       clearTimeout(timer);
-      finish(null, client);
+      finish(null);
     }
   });
 }
@@ -130,6 +156,12 @@ export interface VariationalSpec {
   underlying: string;
   instrument_type: string;
   kind: string;
+}
+
+interface RefMarkEntry {
+  mark: number;
+  index: number | null;
+  ts: number;
 }
 
 export class VariationalAPI {
@@ -202,7 +234,7 @@ export class VariationalAPI {
     ])
   );
 
-  private markCache: Record<string, [number, number]> = {};
+  private markCache: Record<string, RefMarkEntry> = {};
   private configCache: { takerFeeBps: number; maxLevDefault: number; ts: number } | null = null;
 
   async fetchQuote(
@@ -243,20 +275,27 @@ export class VariationalAPI {
     return this.configCache;
   }
 
-  private async referenceMark(assetKey: string): Promise<number | null> {
+  private async referenceMark(assetKey: string): Promise<RefMarkEntry | null> {
     const key = assetKey.toUpperCase();
     const cached = this.markCache[key];
-    if (cached && Date.now() - cached[1] < 30_000) {
-      return cached[0];
+    // Short 3s TTL so top-of-book mark stays fresh while sharing across quick size/direction toggles
+    if (cached && Date.now() - cached.ts < 3_000) {
+      return cached;
     }
-    const q = await this.fetchQuote(key, 1);
-    if (!q) return cached ? cached[0] : null;
+    const q = await this.fetchQuote(key, REF_QTY);
+    if (!q) return cached || null;
     const mark = Number(q.mark_price);
+    const index = q.index_price != null ? Number(q.index_price) : null;
     if (Number.isFinite(mark) && mark > 0) {
-      this.markCache[key] = [mark, Date.now()];
-      return mark;
+      const entry: RefMarkEntry = {
+        mark,
+        index: Number.isFinite(index) ? index : null,
+        ts: Date.now(),
+      };
+      this.markCache[key] = entry;
+      return entry;
     }
-    return cached ? cached[0] : null;
+    return cached || null;
   }
 
   async calculateCost(
@@ -268,10 +307,10 @@ export class VariationalAPI {
     if (!VariationalAPI.VARIATIONAL_INSTRUMENTS[key]) return null;
     const display = VariationalAPI.VARIATIONAL_SYMBOLS[key] || key;
 
-    const markRef = await this.referenceMark(key);
-    if (!markRef || markRef <= 0) return null;
+    const refEntry = await this.referenceMark(key);
+    if (!refEntry || refEntry.mark <= 0) return null;
 
-    const qty = orderSizeUsd / markRef;
+    const qty = orderSizeUsd / refEntry.mark;
     if (qty <= 0) return null;
 
     const [quote, cfg] = await Promise.all([
@@ -295,14 +334,25 @@ export class VariationalAPI {
       return null;
     }
 
-    const mid = (bid + ask) / 2;
-    if (mid <= 0) return null;
+    // Anchor per-side slippage to the unshifted top-of-book mark price (adjusted for any index tick),
+    // matching Variational's UI formula: (ask - refMark)/refMark for Long, (refMark - bid)/refMark for Short.
+    const indexDelta =
+      refEntry.index !== null && indexPrice !== null && Number.isFinite(indexPrice)
+        ? indexPrice - refEntry.index
+        : 0;
+    const rawAnchor = refEntry.mark + indexDelta;
+    const anchorMid =
+      rawAnchor > bid && rawAnchor < ask ? rawAnchor : markPrice;
+    if (anchorMid <= 0) return null;
 
-    const buySlipBps = ((ask - mid) / mid) * 10000;
-    const sellSlipBps = ((mid - bid) / mid) * 10000;
+    const buySlipBps = ((ask - anchorMid) / anchorMid) * 10000;
+    const sellSlipBps = ((anchorMid - bid) / anchorMid) * 10000;
     const avgSlipBps = (buySlipBps + sellSlipBps) / 2;
-    const spreadBps = ((ask - bid) / mid) * 10000;
+    const spreadBps = ((ask - bid) / anchorMid) * 10000;
 
+    // Direction-aware open & close:
+    // If Long: open = Long (buySlipBps), close = Short (sellSlipBps)
+    // If Short: open = Short (sellSlipBps), close = Long (buySlipBps)
     const openingSlip = isLong ? buySlipBps : sellSlipBps;
     const closingSlip = isLong ? sellSlipBps : buySlipBps;
 
@@ -332,7 +382,7 @@ export class VariationalAPI {
       max_leverage: maxLev,
       executed: filled ? true : "PARTIAL",
       filled,
-      mid_price: mid,
+      mid_price: anchorMid,
       mark_price: markPrice,
       index_price: indexPrice,
       open_fee_bps: feeBps,
