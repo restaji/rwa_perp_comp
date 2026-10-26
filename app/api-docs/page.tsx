@@ -24,6 +24,15 @@ const NAV_SECTIONS = [
 export default function APIDocsPage() {
   const [activeSection, setActiveSection] = useState("introduction");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("https://realworldperps.xyz");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.location.origin) {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
+  const baseUrl = API_BASE || origin;
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -138,7 +147,7 @@ export default function APIDocsPage() {
               </p>
               <CodeBlock 
                 id="base-url-code"
-                code={API_BASE}
+                code={baseUrl}
                 copyToClipboard={copyToClipboard}
                 copiedId={copiedId}
               />
@@ -154,7 +163,7 @@ export default function APIDocsPage() {
                 id="auth-code"
                 language="bash"
                 code={`# No authentication required
-curl "${API_BASE}/api/compare/XAU?size=100000&direction=long"`}
+curl "${baseUrl}/api/compare/XAU?size=100000&direction=long"`}
                 copyToClipboard={copyToClipboard}
                 copiedId={copiedId}
               />
@@ -215,7 +224,7 @@ curl "${API_BASE}/api/compare/XAU?size=100000&direction=long"`}
               <CodeBlock 
                 id="example-request"
                 language="bash"
-                code={`curl "${API_BASE}/api/compare/XAU?size=100000&direction=long&order_type=taker"`}
+                code={`curl "${baseUrl}/api/compare/XAU?size=100000&direction=long&order_type=taker"`}
                 copyToClipboard={copyToClipboard}
                 copiedId={copiedId}
               />
@@ -406,7 +415,7 @@ curl "${API_BASE}/api/compare/XAU?size=100000&direction=long"`}
                 id="js-example"
                 language="javascript"
                 code={`const response = await fetch(
-  '${API_BASE}/api/compare/XAU?size=100000&direction=long'
+  '${baseUrl}/api/compare/XAU?size=100000&direction=long'
 );
 const data = await response.json();
 
@@ -427,7 +436,7 @@ console.log(\`USD cost: $\${usdCost.toFixed(2)}\`);`}
                 code={`import requests
 
 response = requests.get(
-    '${API_BASE}/api/compare/XAU',
+    '${baseUrl}/api/compare/XAU',
     params={
         'size': 100000,
         'direction': 'long',

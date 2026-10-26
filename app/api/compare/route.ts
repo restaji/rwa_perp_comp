@@ -3,6 +3,7 @@ import { ASSETS } from "@/lib/server/models";
 import { comparator } from "@/lib/server/comparator";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "sin1";
 export const maxDuration = 30;
 
 const MAX_ORDER_SIZE = 1_000_000_000;

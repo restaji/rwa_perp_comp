@@ -121,7 +121,7 @@ export default function FeeAnalysisPage() {
   useEffect(() => {
     if (!selectedAsset) return;
     handleApply();
-  }, [handleApply]);
+  }, [selectedAsset, handleApply]);
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
@@ -131,7 +131,7 @@ export default function FeeAnalysisPage() {
     }, AUTO_REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [handleApply]);
+  }, [selectedAsset, handleApply]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {

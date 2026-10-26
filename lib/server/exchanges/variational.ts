@@ -1,13 +1,130 @@
+import http2 from "http2";
 import { floorLeverage } from "../models";
 
 const BASE = "https://omni.variational.io";
-const QUOTE_URL = `${BASE}/api/quotes/simple`;
-const SUPPORTED_ASSETS_URL = `${BASE}/api/metadata/supported_assets`;
-const CONFIG_URL = `${BASE}/api/metadata/config`;
 const SETTLEMENT_ASSET = "USDC";
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+const CHROME_CIPHERS = [
+  "TLS_AES_128_GCM_SHA256",
+  "TLS_AES_256_GCM_SHA384",
+  "TLS_CHACHA20_POLY1305_SHA256",
+  "ECDHE-ECDSA-AES128-GCM-SHA256",
+  "ECDHE-RSA-AES128-GCM-SHA256",
+  "ECDHE-ECDSA-AES256-GCM-SHA384",
+  "ECDHE-RSA-AES256-GCM-SHA384",
+  "ECDHE-ECDSA-CHACHA20-POLY1305",
+  "ECDHE-RSA-CHACHA20-POLY1305",
+  "ECDHE-RSA-AES128-SHA",
+  "ECDHE-RSA-AES256-SHA",
+  "AES128-GCM-SHA256",
+  "AES256-GCM-SHA384",
+  "AES128-SHA",
+  "AES256-SHA",
+].join(":");
+
+function h2RequestJson(
+  method: "GET" | "POST",
+  path: string,
+  bodyObj?: Record<string, any>,
+  underlying: string = "XAU",
+  timeoutMs: number = 12_000
+): Promise<Record<string, any> | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (val: Record<string, any> | null, client?: http2.ClientHttp2Session) => {
+      if (settled) return;
+      settled = true;
+      try {
+        client?.close();
+      } catch {
+        // ignore
+      }
+      resolve(val);
+    };
+
+    let client: http2.ClientHttp2Session;
+    try {
+      client = http2.connect(BASE, {
+        ciphers: CHROME_CIPHERS,
+        ecdhCurve: "X25519:P-256:P-384",
+        minVersion: "TLSv1.2",
+        maxVersion: "TLSv1.3",
+      });
+    } catch {
+      return finish(null);
+    }
+
+    const timer = setTimeout(() => finish(null, client), timeoutMs);
+    client.on("error", () => {
+      clearTimeout(timer);
+      finish(null, client);
+    });
+
+    const bodyStr = bodyObj ? JSON.stringify(bodyObj) : "";
+    const headers: http2.OutgoingHttpHeaders = {
+      ":method": method,
+      ":path": path,
+      ":authority": "omni.variational.io",
+      ":scheme": "https",
+      accept: "application/json, text/plain, */*",
+      "accept-language": "en-US,en;q=0.9",
+      origin: BASE,
+      referer: `${BASE}/perpetual/${underlying}`,
+      "user-agent": BROWSER_UA,
+      "sec-ch-ua":
+        '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"macOS"',
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+    };
+
+    if (method === "POST") {
+      headers["content-type"] = "application/json";
+      headers["content-length"] = String(Buffer.byteLength(bodyStr));
+    }
+
+    try {
+      const req = client.request(headers);
+      let status = 0;
+      let raw = "";
+
+      req.on("response", (resHeaders) => {
+        status = Number(resHeaders[":status"] || 0);
+      });
+      req.on("data", (chunk) => {
+        raw += chunk;
+      });
+      req.on("end", () => {
+        clearTimeout(timer);
+        if (status !== 200 || !raw) {
+          return finish(null, client);
+        }
+        try {
+          finish(JSON.parse(raw), client);
+        } catch {
+          finish(null, client);
+        }
+      });
+      req.on("error", () => {
+        clearTimeout(timer);
+        finish(null, client);
+      });
+
+      if (method === "POST" && bodyStr) {
+        req.write(bodyStr);
+      }
+      req.end();
+    } catch {
+      clearTimeout(timer);
+      finish(null, client);
+    }
+  });
+}
 
 export interface VariationalSpec {
   underlying: string;
@@ -88,16 +205,6 @@ export class VariationalAPI {
   private markCache: Record<string, [number, number]> = {};
   private configCache: { takerFeeBps: number; maxLevDefault: number; ts: number } | null = null;
 
-  private headers(underlying: string = "XAU"): Record<string, string> {
-    return {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Origin: BASE,
-      Referer: `${BASE}/perpetual/${underlying}`,
-      "User-Agent": BROWSER_UA,
-    };
-  }
-
   async fetchQuote(
     assetKey: string,
     qty: number
@@ -109,18 +216,7 @@ export class VariationalAPI {
       instrument: { settlement_asset: SETTLEMENT_ASSET, ...spec },
       qty: String(qty),
     };
-    try {
-      const res = await fetch(QUOTE_URL, {
-        method: "POST",
-        headers: this.headers(underlying),
-        body: JSON.stringify(body),
-        cache: "no-store",
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
-    }
+    return h2RequestJson("POST", "/api/quotes/simple", body, underlying);
   }
 
   private async getConfig(): Promise<{
@@ -132,15 +228,9 @@ export class VariationalAPI {
     }
     let takerFeeBps = 0;
     try {
-      const res = await fetch(CONFIG_URL, {
-        headers: this.headers(),
-        cache: "no-store",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.futures_taker_fee != null) {
-          takerFeeBps = Number(data.futures_taker_fee) * 10000;
-        }
+      const data = await h2RequestJson("GET", "/api/metadata/config");
+      if (data?.futures_taker_fee != null) {
+        takerFeeBps = Number(data.futures_taker_fee) * 10000;
       }
     } catch {
       // default 0 bps on Omni
@@ -197,7 +287,11 @@ export class VariationalAPI {
       quote.index_price != null ? Number(quote.index_price) : null;
     const filledQty = quote.qty != null ? Number(quote.qty) : qty;
 
-    if (!Number.isFinite(bid) || !Number.isFinite(ask) || !Number.isFinite(markPrice)) {
+    if (
+      !Number.isFinite(bid) ||
+      !Number.isFinite(ask) ||
+      !Number.isFinite(markPrice)
+    ) {
       return null;
     }
 

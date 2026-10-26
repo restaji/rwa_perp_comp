@@ -90,7 +90,7 @@ export function VenueGrid({
     });
 
     return sorted;
-  }, [venues, sortField, sortDirection, direction]);
+  }, [venues, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

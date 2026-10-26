@@ -143,7 +143,11 @@ export class VerantaAPI {
   private readonly cacheTtlMs = 30_000;
 
   async fetchSocketData(): Promise<void> {
-    if (this.pairData && Date.now() - this.lastFetch < this.cacheTtlMs) {
+    if (
+      this.pairData &&
+      Object.keys(this.pairData).length > 0 &&
+      Date.now() - this.lastFetch < this.cacheTtlMs
+    ) {
       return;
     }
     try {
@@ -169,6 +173,19 @@ export class VerantaAPI {
     const pairInfo = this.pairData[String(pairIdx)];
     if (!pairInfo || !pairInfo.isPairListed) return null;
     return [pairIdx, pairInfo];
+  }
+
+  async isPairListed(assetKey: string): Promise<boolean> {
+    const pairIdx = VerantaAPI.PAIRS[assetKey.toUpperCase()];
+    if (pairIdx === undefined) return false;
+    if (!this.pairData) {
+      await this.fetchSocketData();
+    }
+    if (!this.pairData || Object.keys(this.pairData).length === 0) {
+      return true;
+    }
+    const pairInfo = this.pairData[String(pairIdx)];
+    return Boolean(pairInfo?.isPairListed);
   }
 
   private impliedCoinPrice(pairInfo: Record<string, any>): number | null {
