@@ -1,15 +1,20 @@
+export type VenueType = "dex" | "cex";
+export type VenueFilter = "all" | "dex" | "cex";
+
 export interface Venue {
   id: string;
   name: string;
   logo: string;
-  maxLeverage: number;
+  venueType?: VenueType;
+  maxLeverage: number | null;
   openingSpreadBps: number;
-  openingSlippageBps: number;
-  closingSlippageBps: number;
-  feeBps: number;
+  openingSlippageBps: number | null;
+  closingSlippageBps: number | null;
+  feeBps: number | null;
   updatedAt: string;
   symbol?: string;
   hasInsufficientLiquidity?: boolean;
+  marketClosed?: boolean;
   availableLiquidityUsd?: number;
   maxBuyUsd?: number;
   maxSellUsd?: number;
@@ -30,6 +35,8 @@ export interface Asset {
   symbol: string;
   name: string;
   category: AssetCategory;
+  hasDex?: boolean;
+  hasCex?: boolean;
 }
 
 const COMMODITY_KEYS = new Set(["XAU", "XAG", "WTI", "BRENT"]);

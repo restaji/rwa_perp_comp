@@ -14,13 +14,12 @@ import {
 import { Venue } from "@/lib/mockVenues";
 import { CostUnit } from "@/components/VenueGrid";
 import {
-  formatBps,
   formatUsd,
   calculateUsdCost,
   formatLiquidityFull,
   calculateTotalCostBps,
-  formatCostValue,
-  costUnitSuffix,
+  formatOptionalCost,
+  closedQuoteNote,
   cn,
 } from "@/lib/utils";
 
@@ -43,6 +42,9 @@ export function VenueCard({
 }: VenueCardProps) {
   const totalCostBps = calculateTotalCostBps(venue);
   const usdCost = calculateUsdCost(orderSize, totalCostBps);
+  const totalLabel =
+    totalCostBps == null ? "—" : formatOptionalCost(totalCostBps, costUnit);
+  const usdLabel = usdCost == null ? "—" : formatUsd(usdCost);
   const hasInsufficientLiquidity = venue.hasInsufficientLiquidity;
 
   return (
@@ -81,6 +83,25 @@ export function VenueCard({
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="font-semibold text-lg text-white">{venue.name}</h4>
+              {venue.venueType === "cex" && (
+                <span className="text-[10px] bg-white/10 text-[#999] px-1.5 py-0.5 rounded uppercase tracking-wider font-medium">
+                  CEX
+                </span>
+              )}
+              {venue.marketClosed && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-[10px] bg-white/10 text-[#999] px-2 py-0.5 rounded-full cursor-help">
+                        Market closed
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-[#1A1A1A] border-white/10 rounded-xl max-w-[260px]">
+                      <p className="text-xs">{closedQuoteNote(venue.updatedAt)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {hasInsufficientLiquidity && (
                 <TooltipProvider>
                   <Tooltip>
@@ -105,7 +126,9 @@ export function VenueCard({
                   {venue.symbol}
                 </span>
               )}
-              <Badge variant="muted">{venue.maxLeverage}x</Badge>
+              <Badge variant="muted">
+                {venue.maxLeverage == null ? "—" : `${venue.maxLeverage}x`}
+              </Badge>
             </div>
           </div>
         </div>
@@ -141,16 +164,15 @@ export function VenueCard({
                     : "text-white",
                 )}
               >
-                {formatCostValue(totalCostBps, costUnit)}
+                {totalLabel}
               </span>
-              <span className="text-sm text-[#888] ml-1">{costUnit === "bps" ? "bps" : "%"}</span>
             </div>
           </div>
 
           {/* USD Cost */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-[#666]">USD Cost</span>
-            <span className="font-mono text-white">{formatUsd(usdCost)}</span>
+            <span className="font-mono text-white">{usdLabel}</span>
           </div>
         </div>
       </div>
@@ -158,11 +180,19 @@ export function VenueCard({
   );
 }
 
-function CostRow({ label, value, unit }: { label: string; value: number; unit: CostUnit }) {
+function CostRow({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: number | null;
+  unit: CostUnit;
+}) {
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-[#888]">{label}</span>
-      <span className="font-mono text-white">{formatCostValue(value, unit)}{costUnitSuffix(unit)}</span>
+      <span className="font-mono text-white">{formatOptionalCost(value, unit)}</span>
     </div>
   );
 }

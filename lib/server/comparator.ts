@@ -3,13 +3,18 @@ import { HyperliquidAPI } from "./exchanges/hyperliquid";
 import { LighterAPI } from "./exchanges/lighter";
 import { AsterAPI } from "./exchanges/aster";
 import { VerantaAPI } from "./exchanges/veranta";
-import { OstiumAPI } from "./exchanges/ostium";
 import { ExtendedAPI } from "./exchanges/extended";
 import { EdgeXAPI } from "./exchanges/edgex";
 import { GRVTAPI } from "./exchanges/grvt";
 import { VariationalAPI } from "./exchanges/variational";
+import { VariationalSwapAPI } from "./exchanges/variational_swap";
 import { OndoAPI } from "./exchanges/ondo";
 import { PacificaAPI } from "./exchanges/pacifica";
+import { RISExAPI } from "./exchanges/risex";
+import { TxFlowAPI } from "./exchanges/txflow";
+import { BinanceAPI } from "./exchanges/binance";
+import { BybitAPI } from "./exchanges/bybit";
+import { BitgetAPI } from "./exchanges/bitget";
 
 function finite(val: unknown, fallback = 0): number {
   if (val === null || val === undefined) return fallback;
@@ -26,13 +31,18 @@ const ALL_VENUES = [
   "lighter",
   "aster",
   "avantis",
-  "ostium",
   "extended",
   "edgex",
   "grvt",
   "variational",
+  "variational_swap",
   "ondo",
   "pacifica",
+  "risex",
+  "txflow",
+  "binance",
+  "bybit",
+  "bitget",
 ] as const;
 
 const MAKER_SLIP_VENUES = [
@@ -44,19 +54,29 @@ const MAKER_SLIP_VENUES = [
   "grvt",
   "ondo",
   "pacifica",
+  "risex",
+  "txflow",
+  "binance",
+  "bybit",
+  "bitget",
 ] as const;
 
 const DIRECTION_SLIP_VENUES = [
   "hyperliquid",
   "lighter",
   "aster",
-  "ostium",
   "extended",
   "edgex",
   "grvt",
   "variational",
+  "variational_swap",
   "ondo",
   "pacifica",
+  "risex",
+  "txflow",
+  "binance",
+  "bybit",
+  "bitget",
 ] as const;
 
 export class FeeComparator {
@@ -64,21 +84,28 @@ export class FeeComparator {
   public lighter = new LighterAPI();
   public aster = new AsterAPI();
   public veranta = new VerantaAPI();
-  public ostium = new OstiumAPI();
   public extended = new ExtendedAPI();
   public edgex = new EdgeXAPI();
   public grvt = new GRVTAPI();
   public variational = new VariationalAPI();
+  public variationalSwap = new VariationalSwapAPI(this.variational);
   public ondo = new OndoAPI();
   public pacifica = new PacificaAPI();
+  public risex = new RISExAPI();
+  public txflow = new TxFlowAPI();
+  public binance = new BinanceAPI();
+  public bybit = new BybitAPI();
+  public bitget = new BitgetAPI();
 
   private blankResult(
     config: AssetConfig,
     orderSizeUsd: number,
     orderType: string,
     direction: string,
-    variationalSymbol: string | null
+    variationalSymbol: string | null,
+    variationalSwapSymbol: string | null
   ): Record<string, any> {
+    const keyUp = config.symbol_key.toUpperCase();
     return {
       asset: config.name,
       symbol_key: config.symbol_key,
@@ -89,28 +116,38 @@ export class FeeComparator {
       lighter: null,
       aster: null,
       avantis: null,
-      ostium: null,
       extended: null,
       edgex: null,
       grvt: null,
       variational: null,
+      variational_swap: null,
       ondo: null,
       pacifica: null,
+      risex: null,
+      txflow: null,
+      binance: null,
+      bybit: null,
+      bitget: null,
       symbols: {
         hyperliquid: config.hyperliquid_symbol,
         lighter: config.lighter_market_id ? config.symbol_key : null,
         aster: config.aster_symbol,
         avantis:
           config.symbol_key in VerantaAPI.PAIRS ? config.symbol_key : null,
-        ostium: config.ostium_symbol,
         extended: config.extended_symbol ?? null,
         edgex: config.edgex_contract_id
           ? config.edgex_symbol || config.symbol_key
           : null,
         grvt: config.grvt_instrument ?? null,
         variational: variationalSymbol,
+        variational_swap: variationalSwapSymbol,
         ondo: config.ondo_symbol ?? null,
         pacifica: config.pacifica_symbol ?? null,
+        risex: config.risex_market_id ? config.symbol_key : null,
+        txflow: config.txflow_symbol ?? null,
+        binance: BinanceAPI.SYMBOLS[keyUp] ?? null,
+        bybit: BybitAPI.SYMBOLS[keyUp] ?? null,
+        bitget: BitgetAPI.SYMBOLS[keyUp] ?? null,
       },
     };
   }
@@ -206,25 +243,6 @@ export class FeeComparator {
     }
   }
 
-  private async fetchOstium(
-    config: AssetConfig,
-    orderSizeUsd: number,
-    isLong: boolean
-  ): Promise<[string, any, any]> {
-    if (!config.ostium_symbol) return ["ostium", null, null];
-    try {
-      const r = await this.ostium.calculateExecutionCost(
-        config.ostium_symbol,
-        orderSizeUsd,
-        isLong
-      );
-      if (r) r.symbol = config.ostium_symbol;
-      return ["ostium", r, null];
-    } catch {
-      return ["ostium", null, null];
-    }
-  }
-
   private async fetchExtended(
     config: AssetConfig,
     orderSizeUsd: number
@@ -303,6 +321,9 @@ export class FeeComparator {
     orderSizeUsd: number,
     isLong: boolean
   ): Promise<[string, any, any]> {
+    if (!(assetKey.toUpperCase() in VariationalAPI.VARIATIONAL_INSTRUMENTS)) {
+      return ["variational", null, null];
+    }
     try {
       const r = await this.variational.calculateCost(
         assetKey,
@@ -312,6 +333,28 @@ export class FeeComparator {
       return ["variational", r, null];
     } catch {
       return ["variational", null, null];
+    }
+  }
+
+  private async fetchVariationalSwap(
+    assetKey: string,
+    orderSizeUsd: number,
+    isLong: boolean
+  ): Promise<[string, any, any]> {
+    if (
+      !(assetKey.toUpperCase() in VariationalSwapAPI.VARIATIONAL_SWAP_INSTRUMENTS)
+    ) {
+      return ["variational_swap", null, null];
+    }
+    try {
+      const r = await this.variationalSwap.calculateCost(
+        assetKey,
+        orderSizeUsd,
+        isLong
+      );
+      return ["variational_swap", r, null];
+    } catch {
+      return ["variational_swap", null, null];
     }
   }
 
@@ -355,6 +398,87 @@ export class FeeComparator {
     }
   }
 
+  private async fetchRisex(
+    config: AssetConfig,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    if (!config.risex_market_id) return ["risex", null, null];
+    try {
+      const r = await this.risex.getOptimalExecution(
+        config.risex_market_id,
+        orderSizeUsd
+      );
+      const liveSym =
+        this.risex.marketCache[Number(config.risex_market_id)]?.symbol || null;
+      if (r) r.symbol = liveSym || config.symbol_key;
+      return ["risex", r, liveSym];
+    } catch {
+      return ["risex", null, null];
+    }
+  }
+
+  private async fetchTxflow(
+    config: AssetConfig,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    if (!config.txflow_symbol) return ["txflow", null, null];
+    try {
+      const r = await this.txflow.getOptimalExecution(
+        config.txflow_symbol,
+        orderSizeUsd
+      );
+      if (r) r.symbol = r.symbol || config.txflow_symbol;
+      return ["txflow", r, null];
+    } catch {
+      return ["txflow", null, null];
+    }
+  }
+
+  private async fetchBinance(
+    assetKey: string,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    const sym = BinanceAPI.SYMBOLS[assetKey.toUpperCase()];
+    if (!sym) return ["binance", null, null];
+    try {
+      const r = await this.binance.getOptimalExecution(sym, orderSizeUsd);
+      if (r) r.symbol = r.symbol || sym;
+      return ["binance", r, null];
+    } catch {
+      return ["binance", null, null];
+    }
+  }
+
+  private async fetchBybit(
+    assetKey: string,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    const sym = BybitAPI.SYMBOLS[assetKey.toUpperCase()];
+    if (!sym) return ["bybit", null, null];
+    try {
+      const r = await this.bybit.getOptimalExecution(sym, orderSizeUsd);
+      if (r) r.symbol = r.symbol || sym;
+      return ["bybit", r, null];
+    } catch {
+      return ["bybit", null, null];
+    }
+  }
+
+  private async fetchBitget(
+    assetKey: string,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    const sym = BitgetAPI.SYMBOLS[assetKey.toUpperCase()];
+    if (!sym) return ["bitget", null, null];
+    try {
+      const r = await this.bitget.getOptimalExecution(sym, orderSizeUsd);
+      if (r) r.symbol = r.symbol || sym;
+      return ["bitget", r, null];
+    } catch {
+      return ["bitget", null, null];
+    }
+  }
+
   private zeroMakerSlippage(result: Record<string, any>): void {
     for (const name of MAKER_SLIP_VENUES) {
       const exData = result[name];
@@ -381,7 +505,8 @@ export class FeeComparator {
       orderSizeUsd,
       orderType,
       direction,
-      VariationalAPI.VARIATIONAL_SYMBOLS[assetKey.toUpperCase()] || null
+      VariationalAPI.VARIATIONAL_SYMBOLS[assetKey.toUpperCase()] || null,
+      VariationalSwapAPI.VARIATIONAL_SWAP_SYMBOLS[assetKey.toUpperCase()] || null
     );
 
     const results = await Promise.all([
@@ -389,13 +514,18 @@ export class FeeComparator {
       this.fetchLighter(config, orderSizeUsd),
       this.fetchAster(config, orderSizeUsd),
       this.fetchVeranta(config, assetKey, orderSizeUsd, isLong),
-      this.fetchOstium(config, orderSizeUsd, isLong),
       this.fetchExtended(config, orderSizeUsd),
       this.fetchEdgex(config, orderSizeUsd, direction),
       this.fetchGrvt(config, orderSizeUsd, direction),
       this.fetchVariational(assetKey, orderSizeUsd, isLong),
+      this.fetchVariationalSwap(assetKey, orderSizeUsd, isLong),
       this.fetchOndo(config, orderSizeUsd),
       this.fetchPacifica(config, orderSizeUsd),
+      this.fetchRisex(config, orderSizeUsd),
+      this.fetchTxflow(config, orderSizeUsd),
+      this.fetchBinance(assetKey, orderSizeUsd),
+      this.fetchBybit(assetKey, orderSizeUsd),
+      this.fetchBitget(assetKey, orderSizeUsd),
     ]);
 
     for (const [name, payload, extra] of results) {
@@ -419,32 +549,53 @@ export class FeeComparator {
     config: AssetConfig,
     orderType: string
   ): Promise<Record<string, { open: number | null; close: number | null }>> {
-    const [hl, lt, as, ex, ed, gr, on, pa] = await Promise.all([
-      config.hyperliquid_symbol
-        ? this.hyperliquid.getFees(config.hyperliquid_symbol)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.lighter_market_id
-        ? this.lighter.getFees(config.lighter_market_id)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.aster_symbol
-        ? this.aster.getFees(config.aster_symbol)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.extended_symbol
-        ? this.extended.getFees(config.extended_symbol)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.edgex_contract_id
-        ? this.edgex.getFees(config.edgex_contract_id)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.grvt_instrument
-        ? this.grvt.getFees(config.grvt_instrument)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.ondo_symbol
-        ? this.ondo.getFees(config.ondo_symbol)
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-      config.pacifica_symbol
-        ? this.pacifica.getFees()
-        : Promise.resolve<[number | null, number | null]>([null, null]),
-    ]);
+    const keyUp = config.symbol_key.toUpperCase();
+    const binSym = BinanceAPI.SYMBOLS[keyUp];
+    const bybSym = BybitAPI.SYMBOLS[keyUp];
+    const bgtSym = BitgetAPI.SYMBOLS[keyUp];
+
+    const [hl, lt, as, ex, ed, gr, on, pa, rx, tf, bn, by, bg] =
+      await Promise.all([
+        config.hyperliquid_symbol
+          ? this.hyperliquid.getFees(config.hyperliquid_symbol)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.lighter_market_id
+          ? this.lighter.getFees(config.lighter_market_id)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.aster_symbol
+          ? this.aster.getFees(config.aster_symbol)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.extended_symbol
+          ? this.extended.getFees(config.extended_symbol)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.edgex_contract_id
+          ? this.edgex.getFees(config.edgex_contract_id)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.grvt_instrument
+          ? this.grvt.getFees(config.grvt_instrument)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.ondo_symbol
+          ? this.ondo.getFees(config.ondo_symbol)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.pacifica_symbol
+          ? this.pacifica.getFees()
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.risex_market_id
+          ? this.risex.getFees(config.risex_market_id)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        config.txflow_symbol
+          ? this.txflow.getFees()
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        binSym
+          ? this.binance.getFees(binSym)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        bybSym
+          ? this.bybit.getFees(bybSym)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+        bgtSym
+          ? this.bitget.getFees(bgtSym)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
+      ]);
 
     const pairs: Record<string, [number | null, number | null]> = {
       hyperliquid: hl,
@@ -455,6 +606,11 @@ export class FeeComparator {
       grvt: gr,
       ondo: on,
       pacifica: pa,
+      risex: rx,
+      txflow: tf,
+      binance: bn,
+      bybit: by,
+      bitget: bg,
     };
 
     const useMaker = orderType === "maker";
@@ -482,22 +638,22 @@ export class FeeComparator {
       orderType
     );
 
-    if (result.ostium) {
-      feeStructure.ostium = {
-        open: result.ostium.fee_bps ?? null,
-        close: 0,
-      };
-    }
     if (result.avantis) {
       feeStructure.avantis = {
-        open: result.avantis.open_fee_bps ?? 0,
-        close: result.avantis.close_fee_bps ?? 0,
+        open: result.avantis.open_fee_bps ?? null,
+        close: result.avantis.close_fee_bps ?? null,
       };
     }
     if (result.variational) {
       feeStructure.variational = {
-        open: result.variational.open_fee_bps ?? 0,
-        close: result.variational.close_fee_bps ?? 0,
+        open: result.variational.open_fee_bps ?? null,
+        close: result.variational.close_fee_bps ?? null,
+      };
+    }
+    if (result.variational_swap) {
+      feeStructure.variational_swap = {
+        open: result.variational_swap.open_fee_bps ?? null,
+        close: result.variational_swap.close_fee_bps ?? null,
       };
     }
 
@@ -505,8 +661,11 @@ export class FeeComparator {
     for (const name of DIRECTION_SLIP_VENUES) {
       const exData = result[name];
       if (!exData) continue;
-      const buySlip = round3(finite(exData.buy_slippage_bps));
-      const sellSlip = round3(finite(exData.sell_slippage_bps));
+      const buyRaw = exData.buy_slippage_bps;
+      const sellRaw = exData.sell_slippage_bps;
+      if (buyRaw == null || sellRaw == null) continue;
+      const buySlip = round3(finite(buyRaw));
+      const sellSlip = round3(finite(sellRaw));
       exData.opening_slippage_bps = isLong ? buySlip : sellSlip;
       exData.closing_slippage_bps = isLong ? sellSlip : buySlip;
       exData.slippage_type = "opening_closing";
@@ -527,11 +686,30 @@ export class FeeComparator {
         continue;
       }
       const slippage = finite(exData.slippage_bps);
-      const effectiveSpread =
-        name === "avantis"
-          ? slippage
-          : finite(exData.opening_slippage_bps) +
-            finite(exData.closing_slippage_bps);
+      let effectiveSpread: number;
+      if (name === "avantis") {
+        const openS = exData.opening_slippage_bps;
+        const closeS = exData.closing_slippage_bps;
+        if (openS == null || !Number.isFinite(Number(openS))) {
+          exData.total_cost_bps = null;
+          exData.exchange = name;
+          exData.filled = false;
+          continue;
+        }
+        effectiveSpread =
+          closeS == null || !Number.isFinite(Number(closeS))
+            ? Number(openS)
+            : Number(openS) + Number(closeS);
+      } else if (
+        exData.opening_slippage_bps == null ||
+        exData.closing_slippage_bps == null
+      ) {
+        effectiveSpread = slippage * 2;
+      } else {
+        effectiveSpread =
+          finite(exData.opening_slippage_bps) +
+          finite(exData.closing_slippage_bps);
+      }
       const fOpen = fees.open;
       const fClose = fees.close;
       if (fOpen === null || fClose === null) continue;
@@ -543,7 +721,7 @@ export class FeeComparator {
       exData.total_cost_bps = totalCost;
       exData.exchange = name;
 
-      if (exData.executed !== "PARTIAL") {
+      if (exData.executed !== "PARTIAL" && exData.market_status !== "closed") {
         ranked.push({
           name,
           total_cost: totalCost,

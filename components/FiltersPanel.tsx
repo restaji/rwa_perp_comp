@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, Search } from "lucide-react";
-import { ORDER_SIZES, Asset, AssetCategory } from "@/lib/mockVenues";
+import { ORDER_SIZES, Asset, AssetCategory, VenueFilter } from "@/lib/mockVenues";
 import { cn } from "@/lib/utils";
 
 type CategoryTab = { id: AssetCategory | "All"; label: string };
@@ -16,6 +16,12 @@ const CATEGORY_TABS: CategoryTab[] = [
   { id: "Forex", label: "Forex" },
 ];
 
+const VENUE_FILTER_OPTIONS: { id: VenueFilter; label: string }[] = [
+  { id: "all", label: "All (Include CEXs)" },
+  { id: "dex", label: "Perp DEX Only" },
+  { id: "cex", label: "Veranta vs CEXs" },
+];
+
 interface FiltersPanelProps {
   assets: Asset[];
   selectedAsset: string;
@@ -26,6 +32,8 @@ interface FiltersPanelProps {
   setOrderSize: (size: number) => void;
   customSize: string;
   setCustomSize: (size: string) => void;
+  venueFilter: VenueFilter;
+  setVenueFilter: (filter: VenueFilter) => void;
 }
 
 export function FiltersPanel({
@@ -38,6 +46,8 @@ export function FiltersPanel({
   setOrderSize,
   customSize,
   setCustomSize,
+  venueFilter,
+  setVenueFilter,
 }: FiltersPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -214,6 +224,24 @@ export function FiltersPanel({
           >
             Short
           </button>
+        </div>
+
+        {/* Venue Type Filter (All / Perp DEX Only / Veranta vs CEXs) */}
+        <div className="flex items-center bg-white/5 rounded-full p-1">
+          {VENUE_FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setVenueFilter(opt.id)}
+              className={cn(
+                "px-4 py-2 text-sm font-medium rounded-full transition-all duration-200",
+                venueFilter === opt.id
+                  ? "bg-[#D8F213] text-[#0A0A0A]"
+                  : "text-[#666] hover:text-white"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 

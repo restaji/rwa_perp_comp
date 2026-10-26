@@ -179,10 +179,8 @@ export class HyperliquidAPI {
       return this.feeCache[searchSymbol];
     }
 
-    const growthEnabled =
-      this.growthModeCache[searchSymbol] ??
-      this.growthModeCache[plainSymbol] ??
-      true;
+    const growthKnown =
+      searchSymbol in this.growthModeCache || plainSymbol in this.growthModeCache;
 
     const assetScale =
       this.deployerFeeScaleCache[searchSymbol] ??
@@ -195,7 +193,17 @@ export class HyperliquidAPI {
     const baseTaker = isFlx ? this.flxBaseTakerRate : this.baseTakerRate;
     const baseMaker = isFlx ? this.flxBaseMakerRate : this.baseMakerRate;
 
-    if (baseTaker === null || baseMaker === null || deployerFeeScale === null) {
+    const growthEnabled = growthKnown
+      ? (this.growthModeCache[searchSymbol] ?? this.growthModeCache[plainSymbol])
+      : null;
+
+    if (
+      !growthKnown ||
+      growthEnabled == null ||
+      baseTaker === null ||
+      baseMaker === null ||
+      deployerFeeScale === null
+    ) {
       return [null, null];
     }
 
@@ -334,7 +342,7 @@ export class HyperliquidAPI {
       stdDefault,
       orderSizeUsd,
       takerFeeBps,
-      0
+      takerFeeBps
     );
     if (!result) return null;
 

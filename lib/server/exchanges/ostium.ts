@@ -77,7 +77,9 @@ export class OstiumAPI {
             if (pair.takerFeeP == null) continue;
             const takerFeeBps = Number(pair.takerFeeP) / 10000.0;
             const makerFeeBps =
-              pair.makerFeeP != null ? Number(pair.makerFeeP) / 10000.0 : 0.0;
+              pair.makerFeeP != null && Number.isFinite(Number(pair.makerFeeP))
+                ? Number(pair.makerFeeP) / 10000.0
+                : null;
             const group = pair.group || {};
 
             cache[symbol] = {
@@ -237,7 +239,8 @@ export class OstiumAPI {
     if (!assetData || assetData.fee_bps == null) return null;
 
     const openFeeBps = Number(assetData.fee_bps);
-    const makerFeeBps = Number(assetData.maker_fee_bps || 0);
+    const makerFeeBps =
+      assetData.maker_fee_bps == null ? null : Number(assetData.maker_fee_bps);
 
     const [remainingLong, remainingShort] = this.getRemainingOiUsd(
       assetData,

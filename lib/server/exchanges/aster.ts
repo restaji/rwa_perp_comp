@@ -10,10 +10,19 @@ const LEVERAGE_API =
   "https://www.asterdex.com/bapi/futures/v1/public/future/common/symbol/leverageoi/remaining";
 const FEE_FAIL_TTL_MS = 60_000;
 
+function commissionToBps(raw: unknown): number | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n * 10_000 : null;
+}
+
 export class AsterAPI {
   private leverageCache: Record<string, number | null> = {};
   private leverageCacheLoaded: Record<string, boolean> = {};
-  private feeCache: Record<string, { taker_fee_bps: number; maker_fee_bps: number }> = {};
+  private feeCache: Record<
+    string,
+    { taker_fee_bps: number; maker_fee_bps: number | null }
+  > = {};
   private feeFailTs: Record<string, number> = {};
 
   private get apiKey(): string {
@@ -82,10 +91,12 @@ export class AsterAPI {
         return [null, null];
       }
 
-      const makerRate = Number(response.makerCommissionRate || 0);
-      const takerRate = Number(response.takerCommissionRate || 0);
-      const takerBps = takerRate * 10000;
-      const makerBps = makerRate * 10000;
+      const takerBps = commissionToBps(response.takerCommissionRate);
+      const makerBps = commissionToBps(response.makerCommissionRate);
+      if (takerBps === null) {
+        this.feeFailTs[symbol] = Date.now();
+        return [null, null];
+      }
 
       this.feeCache[symbol] = {
         taker_fee_bps: takerBps,
@@ -194,7 +205,7 @@ export class AsterAPI {
       stdOrderbook,
       orderSizeUsd,
       takerFeeBps,
-      0
+      takerFeeBps
     );
     if (result) {
       result.fee_bps = takerFeeBps;

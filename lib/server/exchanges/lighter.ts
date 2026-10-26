@@ -6,9 +6,15 @@ import {
 
 const BASE_URL = "https://mainnet.zklighter.elliot.ai/api/v1";
 
+function feeToBps(raw: unknown): number | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n * 100 : null;
+}
+
 interface LighterMarketMeta {
-  taker_fee_bps: number;
-  maker_fee_bps: number;
+  taker_fee_bps: number | null;
+  maker_fee_bps: number | null;
   min_initial_margin_fraction: number | null;
   symbol: string | null;
   status: string | null;
@@ -38,8 +44,8 @@ export class LighterAPI {
         const key = Number(market.market_id);
         const minMargin = market.min_initial_margin_fraction;
         this.marketCache[key] = {
-          taker_fee_bps: Number(market.taker_fee || 0) * 100,
-          maker_fee_bps: Number(market.maker_fee || 0) * 100,
+          taker_fee_bps: feeToBps(market.taker_fee),
+          maker_fee_bps: feeToBps(market.maker_fee),
           min_initial_margin_fraction: minMargin ? Number(minMargin) : null,
           symbol: market.symbol || market.market_symbol || market.name || null,
           status: market.status || null,
@@ -54,7 +60,7 @@ export class LighterAPI {
   async getFees(marketId: number): Promise<[number | null, number | null]> {
     await this.loadMarketCache();
     const meta = this.marketCache[Number(marketId)];
-    if (!meta) return [null, null];
+    if (!meta || meta.taker_fee_bps == null) return [null, null];
     return [meta.taker_fee_bps, meta.maker_fee_bps];
   }
 

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { ASSETS } from "@/lib/server/models";
 import { VariationalAPI } from "@/lib/server/exchanges/variational";
+import { VariationalSwapAPI } from "@/lib/server/exchanges/variational_swap";
+import { BinanceAPI } from "@/lib/server/exchanges/binance";
+import { BybitAPI } from "@/lib/server/exchanges/bybit";
+import { BitgetAPI } from "@/lib/server/exchanges/bitget";
 import { comparator } from "@/lib/server/comparator";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +19,7 @@ export async function GET() {
     // Anchor on Veranta: skip any asset not listed on Veranta
     if (!isOnVeranta) continue;
 
+    const keyUp = key.toUpperCase();
     assetsList.push({
       key,
       name: config.name,
@@ -25,13 +30,18 @@ export async function GET() {
         aster: config.aster_symbol !== null,
         avantis: true,
         veranta: true,
-        ostium: config.ostium_symbol !== null,
         extended: Boolean(config.extended_symbol),
         edgex: Boolean(config.edgex_contract_id),
         grvt: Boolean(config.grvt_instrument),
-        variational: key.toUpperCase() in VariationalAPI.VARIATIONAL_SYMBOLS,
+        variational: keyUp in VariationalAPI.VARIATIONAL_SYMBOLS,
+        variational_swap: keyUp in VariationalSwapAPI.VARIATIONAL_SWAP_SYMBOLS,
         ondo: Boolean(config.ondo_symbol),
         pacifica: Boolean(config.pacifica_symbol),
+        risex: Boolean(config.risex_market_id),
+        txflow: Boolean(config.txflow_symbol),
+        binance: keyUp in BinanceAPI.SYMBOLS,
+        bybit: keyUp in BybitAPI.SYMBOLS,
+        bitget: keyUp in BitgetAPI.SYMBOLS,
       },
     });
   }

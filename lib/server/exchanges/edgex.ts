@@ -8,12 +8,18 @@ const BASE_URL = "https://edgex-prod-v2.edgex.exchange/api/v2/public";
 const DEPTH_URL = `${BASE_URL}/quote/getDepth`;
 const META_URL = `${BASE_URL}/meta/getMetaData`;
 
+function rateToBps(raw: unknown): number | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n * 10_000 : null;
+}
+
 export class EdgeXAPI {
   public metaCache: Record<
     string,
     {
-      taker_fee_bps: number;
-      maker_fee_bps: number;
+      taker_fee_bps: number | null;
+      maker_fee_bps: number | null;
       max_leverage: number | null;
       contract_name: string;
     }
@@ -42,8 +48,8 @@ export class EdgeXAPI {
       for (const c of contracts) {
         const cid = String(c?.contractId || "");
         if (!cid) continue;
-        const takerFeeBps = Number(c.defaultTakerFeeRate || 0) * 10_000;
-        const makerFeeBps = Number(c.defaultMakerFeeRate || 0) * 10_000;
+        const takerFeeBps = rateToBps(c.defaultTakerFeeRate);
+        const makerFeeBps = rateToBps(c.defaultMakerFeeRate);
         const riskTiers = c.riskTierList || [];
         const maxLev =
           Array.isArray(riskTiers) && riskTiers.length > 0
@@ -65,7 +71,7 @@ export class EdgeXAPI {
   async getFees(contractId: number): Promise<[number | null, number | null]> {
     await this.loadMetaCache();
     const entry = this.metaCache[String(contractId)];
-    if (!entry) return [null, null];
+    if (!entry || entry.taker_fee_bps == null) return [null, null];
     return [entry.taker_fee_bps, entry.maker_fee_bps];
   }
 

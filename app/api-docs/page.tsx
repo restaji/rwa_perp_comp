@@ -251,13 +251,15 @@ curl "${baseUrl}/api/compare/XAU?size=100000&direction=long"`}
                 { name: "lighter", type: "object | null", description: "Lighter exchange result" },
                 { name: "aster", type: "object | null", description: "Aster exchange result" },
                 { name: "veranta", type: "object | null", description: "Veranta exchange result" },
-                { name: "ostium", type: "object | null", description: "Ostium exchange result" },
                 { name: "extended", type: "object | null", description: "Extended exchange result" },
                 { name: "edgex", type: "object | null", description: "EdgeX exchange result" },
                 { name: "grvt", type: "object | null", description: "GRVT exchange result" },
-                { name: "variational", type: "object | null", description: "Variational (Omni) exchange result — commodities and select equities/ETFs (NVDA, TSLA, AMD, US500, US100, COIN, SPCX); null when no live quote" },
+                { name: "variational", type: "object | null", description: "Variational (Perp) exchange result — commodities, indices, and US equities/ETFs; null when no live quote" },
+                { name: "variational_swap", type: "object | null", description: "Variational (Swap) exchange result — zero-funding swaps on commodities (XAUS, XAGS, USOILP, UKOILP) and indices (US500S, US100S)" },
                 { name: "ondo", type: "object | null", description: "Ondo exchange result — commodities and US equities" },
                 { name: "pacifica", type: "object | null", description: "Pacifica exchange result — commodities, select forex, and US equities" },
+                { name: "risex", type: "object | null", description: "RISEx exchange result — commodities, indices, and US equities" },
+                { name: "txflow", type: "object | null", description: "TxFlow exchange result — commodities, forex, indices, and US equities" },
               ]} />
             </Section>
 
@@ -340,20 +342,21 @@ curl "${baseUrl}/api/compare/XAU?size=100000&direction=long"`}
   "order_size_usd": 100000.0,
   "order_type": "taker",
   "direction": "long",
-  "winner": "ostium",
-  "winner_cost_bps": 2.89,
+  "winner": "veranta",
+  "winner_cost_bps": 1.0,
   "symbols": {
     "hyperliquid": "xyz:GOLD",
     "lighter": "XAU",
     "aster": "XAUUSDT",
     "veranta": "XAU",
-    "ostium": "XAUUSD",
     "extended": "XAU-USD",
     "edgex": "XAU-USD",
     "grvt": "XAU_USDT",
     "variational": "XAU",
     "ondo": "XAU-USD.P",
-    "pacifica": "XAU"
+    "pacifica": "XAU",
+    "risex": "XAU/USDC",
+    "txflow": "XAU-USDC"
   },
   "hyperliquid": {
     "exchange": "hyperliquid",
@@ -385,26 +388,8 @@ curl "${baseUrl}/api/compare/XAU?size=100000&direction=long"`}
       "filled_usd": 100000.0,
       "levels_used": 5
     }
-  },
-  "ostium": {
-    "exchange": "ostium",
-    "symbol": "XAUUSD",
-    "executed": true,
-    "filled": true,
-    "opening_slippage_bps": 0.69,
-    "closing_slippage_bps": 0.69,
-    "open_fee_bps": 1.5,
-    "close_fee_bps": 0.0,
-    "total_cost_bps": 2.89,
-    "holding_fee_1h_long_pct": 0.00021,
-    "holding_fee_1h_short_pct": -0.00015,
-    "holding_fee_24h_long_pct": 0.005,
-    "holding_fee_24h_short_pct": -0.0036,
-    "max_leverage": 100.0,
-    "mid_price": 5137.39,
-    "timestamp": 1771947189.58
   }
-  // ... other exchanges (lighter, aster, veranta, extended, edgex, grvt, variational, ondo, pacifica)
+  // ... other exchanges (lighter, aster, veranta, extended, edgex, grvt, variational, ondo, pacifica, risex, txflow)
 }`}
                 copyToClipboard={copyToClipboard}
                 copiedId={copiedId}
@@ -449,7 +434,7 @@ print(f"Best venue: {data['winner']}")
 print(f"Total cost: {data['winner_cost_bps']:.2f} bps")
 
 # Get individual exchange costs
-for exchange in ['hyperliquid', 'lighter', 'aster', 'veranta', 'ostium', 'extended', 'edgex', 'grvt', 'variational', 'ondo', 'pacifica']:
+for exchange in ['hyperliquid', 'lighter', 'aster', 'veranta', 'extended', 'edgex', 'grvt', 'variational', 'ondo', 'pacifica', 'risex', 'txflow']:
     if data.get(exchange):
         cost = data[exchange].get('total_cost_bps', 'N/A')
         print(f"  {exchange}: {cost} bps")`}

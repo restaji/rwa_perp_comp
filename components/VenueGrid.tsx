@@ -21,12 +21,11 @@ import { VenueCard, VenueCardSkeleton } from "@/components/VenueCard";
 import { Venue } from "@/lib/mockVenues";
 import {
   calculateUsdCost,
-  formatBps,
   formatUsd,
   formatLiquidityFull,
   calculateTotalCostBps,
-  formatCostValue,
-  costUnitSuffix,
+  formatOptionalCost,
+  closedQuoteNote,
   cn,
 } from "@/lib/utils";
 
@@ -66,8 +65,8 @@ export function VenueGrid({
       if (a.hasInsufficientLiquidity && !b.hasInsufficientLiquidity) return 1;
       if (!a.hasInsufficientLiquidity && b.hasInsufficientLiquidity) return -1;
 
-      let aValue: number;
-      let bValue: number;
+      let aValue: number | null;
+      let bValue: number | null;
 
       switch (sortField) {
         case "totalCost":
@@ -79,12 +78,22 @@ export function VenueGrid({
           bValue = b.feeBps;
           break;
         case "slippage":
-          aValue = a.openingSlippageBps + a.closingSlippageBps;
-          bValue = b.openingSlippageBps + b.closingSlippageBps;
+          aValue =
+            a.openingSlippageBps == null
+              ? null
+              : a.openingSlippageBps + (a.closingSlippageBps ?? 0);
+          bValue =
+            b.openingSlippageBps == null
+              ? null
+              : b.openingSlippageBps + (b.closingSlippageBps ?? 0);
           break;
         default:
           return 0;
       }
+
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
 
       return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
     });
@@ -415,6 +424,25 @@ export function VenueGrid({
                               <span className="font-medium text-white">
                                 {venue.name}
                               </span>
+                              {venue.venueType === "cex" && (
+                                <span className="text-[10px] bg-white/10 text-[#999] px-1.5 py-0.5 rounded uppercase tracking-wider font-medium">
+                                  CEX
+                                </span>
+                              )}
+                              {venue.marketClosed && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-[10px] bg-white/10 text-[#999] px-2 py-0.5 rounded-full cursor-help">
+                                      Market closed
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="bg-[#1A1A1A] border-white/10 rounded-xl max-w-[260px]">
+                                    <p className="text-xs">
+                                      {closedQuoteNote(venue.updatedAt)}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               {isWinner && !hasInsufficientLiquidity && (
                                 <span className="text-[10px] bg-[#D8F213] text-[#0A0A0A] px-2 py-0.5 rounded-full font-semibold">
                                   BEST
@@ -452,7 +480,7 @@ export function VenueGrid({
                             'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
                         }}
                       >
-                        {venue.maxLeverage}x
+                        {venue.maxLeverage == null ? "—" : `${venue.maxLeverage}x`}
                       </td>
                       <td
                         className="px-4 py-4 text-right tabular-nums text-white"
@@ -461,7 +489,7 @@ export function VenueGrid({
                             'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
                         }}
                       >
-                        {formatCostValue(venue.openingSlippageBps, costUnit)}{costUnitSuffix(costUnit)}
+                        {formatOptionalCost(venue.openingSlippageBps, costUnit)}
                       </td>
                       <td
                         className="px-4 py-4 text-right tabular-nums text-white"
@@ -470,7 +498,7 @@ export function VenueGrid({
                             'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
                         }}
                       >
-                        {formatCostValue(venue.closingSlippageBps, costUnit)}{costUnitSuffix(costUnit)}
+                        {formatOptionalCost(venue.closingSlippageBps, costUnit)}
                       </td>
                       <td
                         className="px-4 py-4 text-right tabular-nums text-white"
@@ -479,7 +507,7 @@ export function VenueGrid({
                             'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
                         }}
                       >
-                        {formatCostValue(venue.feeBps, costUnit)}{costUnitSuffix(costUnit)}
+                        {formatOptionalCost(venue.feeBps, costUnit)}
                       </td>
                       <td className="px-4 py-4 text-right">
                         <span
@@ -494,7 +522,7 @@ export function VenueGrid({
                               'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
                           }}
                         >
-                          {formatCostValue(totalCost, costUnit)}{costUnitSuffix(costUnit)}
+                          {formatOptionalCost(totalCost, costUnit)}
                         </span>
                       </td>
                       <td
@@ -504,7 +532,7 @@ export function VenueGrid({
                             'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
                         }}
                       >
-                        {formatUsd(usdCost)}
+                        {usdCost == null ? "—" : formatUsd(usdCost)}
                       </td>
                     </motion.tr>
                   );

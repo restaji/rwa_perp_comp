@@ -17,6 +17,14 @@ export function formatCostValue(bps: number, unit: "bps" | "pct"): string {
   return unit === "bps" ? formatBps(bps) : formatPercent(bps);
 }
 
+export function formatOptionalCost(
+  value: number | null | undefined,
+  unit: "bps" | "pct"
+): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return `${formatCostValue(value, unit)}${costUnitSuffix(unit)}`;
+}
+
 export function costUnitSuffix(unit: "bps" | "pct"): string {
   return unit === "bps" ? " bps" : "%";
 }
@@ -29,6 +37,24 @@ export function formatUsd(amount: number): string {
     return `$${(amount / 1000).toFixed(2)}K`;
   }
   return `$${amount.toFixed(2)}`;
+}
+
+export function closedQuoteNote(updatedAt: string | undefined): string {
+  const when = updatedAt ? new Date(updatedAt) : null;
+  const stamp =
+    when && !Number.isNaN(when.getTime())
+      ? `${when.toLocaleString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "UTC",
+        })} UTC`
+      : null;
+  return stamp
+    ? `Session closed. Spread is the last executable quote (${stamp}), not a live fill.`
+    : "Session closed. Spread is the last executable quote, not a live fill.";
 }
 
 export function parseOrderSize(input: string): number | null {
@@ -51,19 +77,21 @@ export function parseOrderSize(input: string): number | null {
 
 export function calculateTotalCostBps(venue: {
   openingSpreadBps: number;
-  openingSlippageBps: number;
-  closingSlippageBps: number;
-  feeBps: number;
-}): number {
-  return (
-    venue.openingSpreadBps +
-    venue.openingSlippageBps +
-    venue.closingSlippageBps +
-    venue.feeBps
-  );
+  openingSlippageBps: number | null;
+  closingSlippageBps: number | null;
+  feeBps: number | null;
+}): number | null {
+  if (venue.openingSlippageBps == null || venue.feeBps == null) return null;
+  // A missing close quote is omitted from the sum. It is not stored as 0 bps.
+  const close = venue.closingSlippageBps ?? 0;
+  return venue.openingSpreadBps + venue.openingSlippageBps + close + venue.feeBps;
 }
 
-export function calculateUsdCost(orderSize: number, totalCostBps: number): number {
+export function calculateUsdCost(
+  orderSize: number,
+  totalCostBps: number | null
+): number | null {
+  if (totalCostBps == null) return null;
   return (orderSize * totalCostBps) / 10000;
 }
 
@@ -141,14 +169,16 @@ export function getHoldingFeeCostBps(
 export function calculateAdjustedTotalCostBps(
   venue: {
     openingSpreadBps: number;
-    openingSlippageBps: number;
-    closingSlippageBps: number;
-    feeBps: number;
+    openingSlippageBps: number | null;
+    closingSlippageBps: number | null;
+    feeBps: number | null;
     fundingFee24hPct?: number;
     fundingFee24hLongPct?: number;
     fundingFee24hShortPct?: number;
   },
   direction: "long" | "short"
-): number {
-  return calculateTotalCostBps(venue) + getHoldingFeeCostBps(venue, direction);
+): number | null {
+  const base = calculateTotalCostBps(venue);
+  if (base == null) return null;
+  return base + getHoldingFeeCostBps(venue, direction);
 }

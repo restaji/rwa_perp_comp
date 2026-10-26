@@ -197,17 +197,22 @@ export class VerantaAPI {
     return usdTotal / coinTotal;
   }
 
-  private takerFeesBps(pairInfo: Record<string, any>): [number, number] {
+  private feePToBps(raw: unknown): number | null {
+    if (raw === null || raw === undefined || raw === "") return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n * 100 : null;
+  }
+
+  private takerFeesBps(pairInfo: Record<string, any>): [number | null, number | null] {
     const extra = pairInfo.additionalPairParams2 || {};
-    const openBps = Number(extra.openTakerFeeP || 0) * 100;
-    const closeBps = Number(extra.closeTakerFeeP || 0) * 100;
-    return [openBps, closeBps];
+    return [this.feePToBps(extra.openTakerFeeP), this.feePToBps(extra.closeTakerFeeP)];
   }
 
   private async callRiskSpread(
     pairIdx: number,
     coinSize: number,
-    isLong: boolean
+    isLong: boolean,
+    isOpen: boolean = true
   ): Promise<Record<string, any> | null> {
     if (coinSize <= 0) return null;
     try {
@@ -216,7 +221,7 @@ export class VerantaAPI {
         trader: DEFAULT_TRADER,
         coinSize10: String(Math.trunc(coinSize * 1e10)),
         isLong: Boolean(isLong),
-        isOpen: true,
+        isOpen,
         orderType: ORDER_TYPE_MARKET,
       };
       const res = await fetch(`${RISK_API}/spread`, {
@@ -232,10 +237,10 @@ export class VerantaAPI {
     }
   }
 
-  private pct10ToBps(raw: unknown): number {
-    if (raw === null || raw === undefined) return 0;
+  private pct10ToBps(raw: unknown): number | null {
+    if (raw === null || raw === undefined || raw === "") return null;
     const n = Number(raw);
-    return Number.isFinite(n) ? n / 1e8 : 0;
+    return Number.isFinite(n) ? n / 1e8 : null;
   }
 
   private priceImpactSpreadBps(
@@ -281,9 +286,14 @@ export class VerantaAPI {
     pairIdx: number,
     pairInfo: Record<string, any>,
     positionSizeUsd: number,
-    isLong: boolean
-  ): Promise<[number, Record<string, any>]> {
-    const fixedBps = Number(pairInfo.spreadP || 0) * 100;
+    isLong: boolean,
+    isOpen: boolean = true
+  ): Promise<[number | null, Record<string, any>]> {
+    const fixedRaw = pairInfo.spreadP;
+    const fixedBps =
+      fixedRaw == null || fixedRaw === "" || !Number.isFinite(Number(fixedRaw))
+        ? null
+        : Number(fixedRaw) * 100;
     const capPct = Number(pairInfo.storagePairParams?.posSpreadCap || 0);
     const capBps = capPct > 0 ? capPct * 100 : Infinity;
 
@@ -297,35 +307,43 @@ export class VerantaAPI {
 
     const risk =
       coinSize > 0
-        ? await this.callRiskSpread(pairIdx, coinSize, isLong)
+        ? await this.callRiskSpread(pairIdx, coinSize, isLong, isOpen)
         : null;
     if (risk !== null) {
       const totalBps = this.pct10ToBps(risk.spreadPctWithoutFlow10);
       const withFlowBps = this.pct10ToBps(risk.estimatedSpreadPctWithFlow10);
-      const spreadBps = totalBps;
-      const dynamicBps = Math.max(0, spreadBps - fixedBps);
-      return [
-        spreadBps,
-        {
-          spread_bps: spreadBps,
-          fixed_spread_bps: fixedBps,
-          dynamic_spread_bps: dynamicBps,
-          price_impact_spread_bps: dynamicBps,
-          skew_impact_spread_bps: 0,
-          is_dynamic_spread_enabled: groupDyn || dynamicBps > 0,
-          spread_source: "risk_v2",
-          spread_mechanism: risk.spreadMechanism ?? null,
-          spread_bypass: Boolean(risk.byPass),
-          estimated_spread_with_flow_bps: withFlowBps,
-          coin_size: coinSize,
-          coin_price: coinPrice,
-        },
-      ];
+      if (totalBps !== null) {
+        const spreadBps = totalBps;
+        const fixed = fixedBps ?? 0;
+        const dynamicBps = Math.max(0, spreadBps - fixed);
+        return [
+          spreadBps,
+          {
+            spread_bps: spreadBps,
+            fixed_spread_bps: fixedBps,
+            dynamic_spread_bps: dynamicBps,
+            price_impact_spread_bps: dynamicBps,
+            skew_impact_spread_bps: null,
+            is_dynamic_spread_enabled: groupDyn || dynamicBps > 0,
+            spread_source: "risk_v2",
+            spread_mechanism: risk.spreadMechanism ?? null,
+            spread_bypass: Boolean(risk.byPass),
+            estimated_spread_with_flow_bps: withFlowBps,
+            coin_size: coinSize,
+            coin_price: coinPrice,
+          },
+        ];
+      }
     }
+
+    if (!isOpen) return [null, { spread_source: null }];
 
     const impact = this.priceImpactSpreadBps(pairInfo, positionSizeUsd, isLong);
     const skew = this.skewImpactSpreadBps(pairInfo, positionSizeUsd, isLong);
-    const spreadBps = Math.min(fixedBps + impact + skew, capBps);
+    if (fixedBps === null && impact === 0 && skew === 0) {
+      return [null, { spread_source: null }];
+    }
+    const spreadBps = Math.min((fixedBps ?? 0) + impact + skew, capBps);
     return [
       spreadBps,
       {
@@ -373,15 +391,28 @@ export class VerantaAPI {
     const unfilledUsd = Math.max(0, orderSizeUsd - filledUsd);
 
     const [openFeeBps, closeFeeBps] = this.takerFeesBps(pairInfo);
+    if (openFeeBps === null || closeFeeBps === null) return null;
     const maxLev = pairInfo.leverages?.maxLeverage;
 
     const [spreadBps, spreadMeta] = await this.getSpread(
       pairIdx,
       pairInfo,
       filledUsd,
-      isLong
+      isLong,
+      true
     );
-    const totalCost = spreadBps + openFeeBps + closeFeeBps;
+    if (spreadBps === null) return null;
+    const [closeSpread] = await this.getSpread(
+      pairIdx,
+      pairInfo,
+      filledUsd,
+      isLong,
+      false
+    );
+    const totalCost =
+      closeSpread === null
+        ? spreadBps + openFeeBps + closeFeeBps
+        : spreadBps + closeSpread + openFeeBps + closeFeeBps;
 
     const avFrom = pairInfo.from;
     const avTo = pairInfo.to;
@@ -396,9 +427,9 @@ export class VerantaAPI {
       mid_price: spreadMeta.coin_price || 0,
       slippage_bps: spreadBps,
       opening_slippage_bps: spreadBps,
-      closing_slippage_bps: 0,
-      buy_slippage_bps: isLong ? spreadBps : 0,
-      sell_slippage_bps: !isLong ? spreadBps : 0,
+      closing_slippage_bps: closeSpread,
+      buy_slippage_bps: isLong ? spreadBps : closeSpread,
+      sell_slippage_bps: isLong ? closeSpread : spreadBps,
       slippage_type: "opening_closing",
       open_fee_bps: openFeeBps,
       close_fee_bps: closeFeeBps,

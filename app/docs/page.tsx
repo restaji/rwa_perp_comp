@@ -14,13 +14,14 @@ const NAV_SECTIONS = [
   { id: "lighter", label: "Lighter", indent: true },
   { id: "aster", label: "Aster", indent: true },
   { id: "veranta", label: "Veranta", indent: true },
-  { id: "ostium", label: "Ostium", indent: true },
   { id: "extended", label: "Extended", indent: true },
   { id: "edgex", label: "EdgeX", indent: true },
   { id: "grvt", label: "GRVT", indent: true },
   { id: "variational", label: "Variational", indent: true },
   { id: "ondo", label: "Ondo", indent: true },
   { id: "pacifica", label: "Pacifica", indent: true },
+  { id: "risex", label: "RISEx", indent: true },
+  { id: "txflow", label: "TxFlow", indent: true },
   { id: "comparison",    label: "Exchange Comparison" },
   { id: "assets",        label: "Supported Assets" },
   { id: "limitations",   label: "Limitations" },
@@ -195,24 +196,24 @@ export default function DocsPage() {
             {/* Exchanges Overview */}
             <Section id="exchanges" title="Supported Exchanges">
               <p>
-                We currently support eleven perpetual DEXs, each with different pricing models and fee 
+                We currently support twelve perpetual DEXs, each with different pricing models and fee 
                 structures. Understanding these differences helps you choose the best venue for your trade.
               </p>
 
               <div className="grid sm:grid-cols-2 gap-4 my-6">
                 <ExchangeCard 
                   name="Order Book Exchanges" 
-                  exchanges={["Hyperliquid", "Lighter", "Aster", "Extended", "EdgeX", "GRVT", "Ondo", "Pacifica"]}
+                  exchanges={["Hyperliquid", "Lighter", "Aster", "Extended", "EdgeX", "GRVT", "Ondo", "Pacifica", "RISEx", "TxFlow"]}
                   description="Your order walks through available liquidity. Slippage depends on order book depth."
                 />
                 <ExchangeCard 
                   name="Oracle-Based Exchanges" 
-                  exchanges={["Veranta", "Ostium"]}
+                  exchanges={["Veranta"]}
                   description="Trade against oracle prices with a dynamic spread. Slippage is modelled from the spread parameter rather than real order book depth."
                 />
                 <ExchangeCard 
                   name="Quote-Based (RFQ)" 
-                  exchanges={["Variational"]}
+                  exchanges={["Variational (Perp)", "Variational (Swap)"]}
                   description="A single liquidity provider publishes executable bid/ask quotes at fixed size buckets. There are no trading fees — the spread is the only cost."
                 />
               </div>
@@ -319,31 +320,6 @@ export default function DocsPage() {
               <p>
                 Each asset has a maximum position size (maxWalletOI). If your order exceeds this, 
                 we mark it as a partial fill.
-              </p>
-            </Section>
-
-            {/* Ostium */}
-            <Section id="ostium" title="Ostium" badge="Oracle-Based">
-              <p>
-                Ostium specializes in real-world asset perpetuals. They use their own price feed that 
-                provides bid, ask, and mid prices directly.
-              </p>
-
-              <h3 className="text-lg font-medium text-white mt-8 mb-3">How Spread is Calculated</h3>
-              <p>
-                For assets with dynamic pricing, spread combines the market spread (bid-ask gap) with 
-                a volume-based component. Recent trading activity affects the spread — high volume 
-                leads to wider spreads.
-              </p>
-              <p>
-                The volume impact decays over time using a mathematical formula, so old trades have 
-                less effect than recent ones.
-              </p>
-
-              <h3 className="text-lg font-medium text-white mt-8 mb-3">Fee Structure</h3>
-              <p>
-                Fees come from the pairs API and may be overridden during promotional seasons. 
-                Notably, Ostium charges no closing fee — you only pay when opening.
               </p>
             </Section>
 
@@ -462,6 +438,28 @@ export default function DocsPage() {
               <ThinBookNote venue="Pacifica" />
             </Section>
 
+            {/* RISEx */}
+            <Section id="risex" title="RISEx" badge="Order Book">
+              <p>
+                RISEx is an order-book perpetuals DEX on Rise Chain offering commodities, index ETFs, and US equities settled in USDC.
+              </p>
+
+              <ClobSlippageSection />
+              <ClobFeeSection venue="RISEx" takerBps="3" makerBps="1" />
+              <ThinBookNote venue="RISEx" />
+            </Section>
+
+            {/* TxFlow */}
+            <Section id="txflow" title="TxFlow" badge="Order Book">
+              <p>
+                TxFlow is a fully on-chain L1 CLOB perpetuals DEX offering commodities, forex, indices, and US equities settled in USDC.
+              </p>
+
+              <ClobSlippageSection />
+              <ClobFeeSection venue="TxFlow" takerBps="4.5" makerBps="1.5" />
+              <ThinBookNote venue="TxFlow" />
+            </Section>
+
             {/* Comparison Table */}
             <Section id="comparison" title="Exchange Comparison">
               <p>
@@ -477,13 +475,14 @@ export default function DocsPage() {
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Lighter</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Aster</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Veranta</th>
-                      <th className="text-center py-2.5 px-3 text-[#666] font-medium">Ostium</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Extended</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">EdgeX</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">GRVT</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Variational</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Ondo</th>
                       <th className="text-center py-2.5 px-3 text-[#666] font-medium">Pacifica</th>
+                      <th className="text-center py-2.5 px-3 text-[#666] font-medium">RISEx</th>
+                      <th className="text-center py-2.5 px-3 text-[#666] font-medium">TxFlow</th>
                     </tr>
                   </thead>
                   <tbody className="text-[#999]">
@@ -493,11 +492,12 @@ export default function DocsPage() {
                       <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Oracle</td>
-                      <td className="py-3 px-4 text-center">Oracle</td>
                       <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Quote (RFQ)</td>
+                      <td className="py-3 px-4 text-center">Order Book</td>
+                      <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Order Book</td>
                       <td className="py-3 px-4 text-center">Order Book</td>
                     </tr>
@@ -510,8 +510,9 @@ export default function DocsPage() {
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
-                      <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">Quoted spread</td>
+                      <td className="py-2.5 px-3 text-center">2× round trip</td>
+                      <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                     </tr>
@@ -521,11 +522,12 @@ export default function DocsPage() {
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center">Separate rate</td>
-                      <td className="py-2.5 px-3 text-center text-[#D8F213]">No close fee</td>
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center text-[#D8F213]">No fees</td>
+                      <td className="py-2.5 px-3 text-center">= Open fee</td>
+                      <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                       <td className="py-2.5 px-3 text-center">= Open fee</td>
                     </tr>
@@ -535,11 +537,12 @@ export default function DocsPage() {
                       <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center">—</td>
-                      <td className="py-2.5 px-3 text-center">Season overrides</td>
                       <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center text-[#D8F213]">Zero fees</td>
+                      <td className="py-2.5 px-3 text-center">—</td>
+                      <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center">—</td>
                       <td className="py-2.5 px-3 text-center">—</td>
                     </tr>
@@ -549,11 +552,12 @@ export default function DocsPage() {
                       <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Max position cap</td>
-                      <td className="py-3 px-4 text-center">Always filled</td>
                       <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Quote buckets</td>
+                      <td className="py-3 px-4 text-center">Book depth</td>
+                      <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Book depth</td>
                       <td className="py-3 px-4 text-center">Book depth</td>
                     </tr>
@@ -577,7 +581,6 @@ export default function DocsPage() {
                       <th className="text-center py-3 px-4 text-[#666] font-medium">Lighter</th>
                       <th className="text-center py-3 px-4 text-[#666] font-medium">Aster</th>
                       <th className="text-center py-3 px-4 text-[#666] font-medium">Veranta</th>
-                      <th className="text-center py-3 px-4 text-[#666] font-medium">Ostium</th>
                       <th className="text-center py-3 px-4 text-[#666] font-medium">Extended</th>
                       <th className="text-center py-3 px-4 text-[#666] font-medium">EdgeX</th>
                       <th className="text-center py-3 px-4 text-[#666] font-medium">GRVT</th>
@@ -588,45 +591,45 @@ export default function DocsPage() {
                   </thead>
                   <tbody className="text-[#999]">
                     {[
-                      { asset: "Gold (XAU)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "Silver (XAG)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "WTI Crude Oil", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "Brent Crude Oil", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "—" },
-                      { asset: "EUR/USD", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "✓", eg: "—", gr: "—", va: "—", on: "—", pa: "✓" },
-                      { asset: "GBP/USD", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "USD/JPY", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "✓", eg: "—", gr: "—", va: "—", on: "—", pa: "✓" },
-                      { asset: "USD/CAD", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "USD/CHF", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "AUD/USD", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "NZD/USD", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "Apple (AAPL)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
-                      { asset: "Microsoft (MSFT)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
-                      { asset: "Google (GOOG)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "✓" },
-                      { asset: "Amazon (AMZN)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "Meta (META)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
-                      { asset: "Nvidia (NVDA)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "Tesla (TSLA)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "S&P 500 (US500)", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "Nasdaq 100 (US100)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "—" },
-                      { asset: "Coinbase (COIN)", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "—" },
-                      { asset: "Robinhood (HOOD)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
-                      { asset: "SpaceX (SPCX)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "—", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
-                      { asset: "AMD (AMD)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "—" },
-                      { asset: "Intel (INTC)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "Micron (MU)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
-                      { asset: "SanDisk (SNDK)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
-                      { asset: "Cerebras (CBRS)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "—", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "South Korea (EWY)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "—", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "Alibaba (BABA)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "—", ex: "✓", eg: "—", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "Circle (CRCL)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
-                      { asset: "Marvell (MRVL)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "—", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "MicroStrategy (MSTR)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
-                      { asset: "BlackBerry (BB)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "—", gr: "—", va: "—", on: "✓", pa: "—" },
-                      { asset: "Palantir (PLTR)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
-                      { asset: "Broadcom (AVGO)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "Netflix (NFLX)", hl: "✓", lt: "—", as: "✓", av: "✓", os: "✓", ex: "—", eg: "—", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "CoreWeave (CRWV)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "—", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
-                      { asset: "SK Hynix (SKHY)", hl: "✓", lt: "✓", as: "—", av: "✓", os: "—", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "Gold (XAU)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "Silver (XAG)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "WTI Crude Oil", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "Brent Crude Oil", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "—" },
+                      { asset: "EUR/USD", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "✓", eg: "—", gr: "—", va: "—", on: "—", pa: "✓" },
+                      { asset: "GBP/USD", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
+                      { asset: "USD/JPY", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "✓", eg: "—", gr: "—", va: "—", on: "—", pa: "✓" },
+                      { asset: "USD/CAD", hl: "—", lt: "✓", as: "—", av: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
+                      { asset: "USD/CHF", hl: "—", lt: "✓", as: "—", av: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
+                      { asset: "AUD/USD", hl: "—", lt: "✓", as: "—", av: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
+                      { asset: "NZD/USD", hl: "—", lt: "✓", as: "—", av: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
+                      { asset: "Apple (AAPL)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
+                      { asset: "Microsoft (MSFT)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
+                      { asset: "Google (GOOG)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "✓" },
+                      { asset: "Amazon (AMZN)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "Meta (META)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
+                      { asset: "Nvidia (NVDA)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "Tesla (TSLA)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "S&P 500 (US500)", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "Nasdaq 100 (US100)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "—", va: "✓", on: "✓", pa: "—" },
+                      { asset: "Coinbase (COIN)", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "—" },
+                      { asset: "Robinhood (HOOD)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "SpaceX (SPCX)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "✓" },
+                      { asset: "AMD (AMD)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "✓", on: "✓", pa: "—" },
+                      { asset: "Intel (INTC)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "Micron (MU)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "SanDisk (SNDK)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "Cerebras (CBRS)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "South Korea (EWY)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "Alibaba (BABA)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "—", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "Circle (CRCL)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "Marvell (MRVL)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "MicroStrategy (MSTR)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "BlackBerry (BB)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "—", gr: "—", va: "—", on: "✓", pa: "—" },
+                      { asset: "Palantir (PLTR)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
+                      { asset: "Broadcom (AVGO)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "Netflix (NFLX)", hl: "✓", lt: "—", as: "✓", av: "✓", ex: "—", eg: "—", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "CoreWeave (CRWV)", hl: "✓", lt: "✓", as: "✓", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "—" },
+                      { asset: "SK Hynix (SKHY)", hl: "✓", lt: "✓", as: "—", av: "✓", ex: "✓", eg: "✓", gr: "✓", va: "—", on: "✓", pa: "✓" },
                     ].map((row) => (
                       <tr key={row.asset} className="border-b border-white/5">
                         <td className="py-3 px-4 text-white">{row.asset}</td>
@@ -634,7 +637,6 @@ export default function DocsPage() {
                         <CoverageMark value={row.lt} />
                         <CoverageMark value={row.as} />
                         <CoverageMark value={row.av} />
-                        <CoverageMark value={row.os} />
                         <CoverageMark value={row.ex} />
                         <CoverageMark value={row.eg} />
                         <CoverageMark value={row.gr} />

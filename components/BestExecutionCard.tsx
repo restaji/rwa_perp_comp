@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Venue } from "@/lib/mockVenues";
-import { formatCostValue, costUnitSuffix, calculateAdjustedTotalCostBps } from "@/lib/utils";
+import { formatOptionalCost, calculateAdjustedTotalCostBps } from "@/lib/utils";
 import { CostUnit } from "@/components/VenueGrid";
 
 interface BestExecutionCardProps {
@@ -37,7 +37,7 @@ export function BestExecutionCard({ venue, orderSize, direction, costUnit }: Bes
         </span>
         <span className="font-semibold">{venue.name}</span>
         <span>at</span>
-        <span className="text-[#D8F213] font-semibold">{formatCostValue(totalCostBps, costUnit)}{costUnitSuffix(costUnit)}</span>
+        <span className="text-[#D8F213] font-semibold">{formatOptionalCost(totalCostBps, costUnit)}</span>
       </p>
     </motion.div>
   );

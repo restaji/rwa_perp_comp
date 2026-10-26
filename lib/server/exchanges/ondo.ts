@@ -169,7 +169,7 @@ export class OndoAPI {
       stdOrderbook,
       orderSizeUsd,
       takerFeeBps,
-      0
+      takerFeeBps
     );
     if (result) {
       result.fee_bps = takerFeeBps;

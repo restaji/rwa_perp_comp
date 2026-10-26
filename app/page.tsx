@@ -15,7 +15,7 @@ import {
   BestExecutionCardSkeleton,
 } from "@/components/BestExecutionCard";
 import { VenueGrid, CostUnit } from "@/components/VenueGrid";
-import { Venue, Asset } from "@/lib/mockVenues";
+import { Venue, Asset, VenueFilter } from "@/lib/mockVenues";
 import { fetchAssets, fetchComparison } from "@/lib/api";
 import { calculateAdjustedTotalCostBps, cn } from "@/lib/utils";
 
@@ -27,6 +27,7 @@ export default function FeeAnalysisPage() {
   const [direction, setDirection] = useState<"long" | "short">("long");
   const [orderSize, setOrderSize] = useState(100000);
   const [customSize, setCustomSize] = useState("");
+  const [venueFilter, setVenueFilter] = useState<VenueFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -36,15 +37,46 @@ export default function FeeAnalysisPage() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const visibleAssets = useMemo(() => {
+    if (venueFilter === "dex") {
+      return assets.filter((a) => a.hasDex !== false);
+    }
+    if (venueFilter === "cex") {
+      return assets.filter((a) => a.hasCex !== false);
+    }
+    return assets;
+  }, [assets, venueFilter]);
+
+  useEffect(() => {
+    if (visibleAssets.length === 0) return;
+    if (!visibleAssets.some((a) => a.id === selectedAsset)) {
+      setSelectedAsset(visibleAssets[0].id);
+    }
+  }, [visibleAssets, selectedAsset]);
+
+  const filteredVenues = useMemo(() => {
+    if (venueFilter === "dex") {
+      return venues.filter((v) => v.venueType !== "cex");
+    }
+    if (venueFilter === "cex") {
+      return venues.filter((v) => v.id === "veranta" || v.venueType === "cex");
+    }
+    return venues;
+  }, [venues, venueFilter]);
+
   const winnerVenue = useMemo(() => {
-    const eligibleVenues = venues.filter((v) => !v.hasInsufficientLiquidity);
+    const eligibleVenues = filteredVenues.filter(
+      (v) => !v.hasInsufficientLiquidity && !v.marketClosed
+    );
     if (eligibleVenues.length === 0) return null;
     return eligibleVenues.reduce((best, venue) => {
       const bestCost = calculateAdjustedTotalCostBps(best, direction);
       const currentCost = calculateAdjustedTotalCostBps(venue, direction);
+      if (currentCost == null) return best;
+      if (bestCost == null) return venue;
       return currentCost < bestCost ? venue : best;
     }, eligibleVenues[0]);
-  }, [venues, direction]);
+  }, [filteredVenues, direction]);
 
   const handleApply = useCallback(
     async (isManualRefresh = false) => {
@@ -234,7 +266,7 @@ export default function FeeAnalysisPage() {
         {/* Filters */}
         <section className="mb-8">
           <FiltersPanel
-            assets={assets}
+            assets={visibleAssets}
             selectedAsset={selectedAsset}
             setSelectedAsset={setSelectedAsset}
             direction={direction}
@@ -243,6 +275,8 @@ export default function FeeAnalysisPage() {
             setOrderSize={setOrderSize}
             customSize={customSize}
             setCustomSize={setCustomSize}
+            venueFilter={venueFilter}
+            setVenueFilter={setVenueFilter}
           />
         </section>
 
@@ -344,7 +378,7 @@ export default function FeeAnalysisPage() {
           >
             {/* Grid */}
             <VenueGrid
-              venues={venues}
+              venues={filteredVenues}
               orderSize={orderSize}
               isLoading={isLoading}
               winnerVenueId={winnerVenue?.id || null}
