@@ -1,6 +1,6 @@
 /**
  * lib/server/models.ts
- * Ported 1:1 from venue_data/models.py
+ * Asset config and leverage helpers for the comparator.
  */
 
 export const HYPERLIQUID_GROWTH_MODE_SCALE = 0.1;

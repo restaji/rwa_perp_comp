@@ -211,8 +211,7 @@ export class VerantaAPI {
   private async callRiskSpread(
     pairIdx: number,
     coinSize: number,
-    isLong: boolean,
-    isOpen: boolean = true
+    isLong: boolean
   ): Promise<Record<string, any> | null> {
     if (coinSize <= 0) return null;
     try {
@@ -221,7 +220,7 @@ export class VerantaAPI {
         trader: DEFAULT_TRADER,
         coinSize10: String(Math.trunc(coinSize * 1e10)),
         isLong: Boolean(isLong),
-        isOpen,
+        isOpen: true,
         orderType: ORDER_TYPE_MARKET,
       };
       const res = await fetch(`${RISK_API}/spread`, {
@@ -286,8 +285,7 @@ export class VerantaAPI {
     pairIdx: number,
     pairInfo: Record<string, any>,
     positionSizeUsd: number,
-    isLong: boolean,
-    isOpen: boolean = true
+    isLong: boolean
   ): Promise<[number | null, Record<string, any>]> {
     const fixedRaw = pairInfo.spreadP;
     const fixedBps =
@@ -307,7 +305,7 @@ export class VerantaAPI {
 
     const risk =
       coinSize > 0
-        ? await this.callRiskSpread(pairIdx, coinSize, isLong, isOpen)
+        ? await this.callRiskSpread(pairIdx, coinSize, isLong)
         : null;
     if (risk !== null) {
       const totalBps = this.pct10ToBps(risk.spreadPctWithoutFlow10);
@@ -335,8 +333,6 @@ export class VerantaAPI {
         ];
       }
     }
-
-    if (!isOpen) return [null, { spread_source: null }];
 
     const impact = this.priceImpactSpreadBps(pairInfo, positionSizeUsd, isLong);
     const skew = this.skewImpactSpreadBps(pairInfo, positionSizeUsd, isLong);
@@ -398,21 +394,11 @@ export class VerantaAPI {
       pairIdx,
       pairInfo,
       filledUsd,
-      isLong,
-      true
+      isLong
     );
     if (spreadBps === null) return null;
-    const [closeSpread] = await this.getSpread(
-      pairIdx,
-      pairInfo,
-      filledUsd,
-      isLong,
-      false
-    );
-    const totalCost =
-      closeSpread === null
-        ? spreadBps + openFeeBps + closeFeeBps
-        : spreadBps + closeSpread + openFeeBps + closeFeeBps;
+    // Protocol rule: spread is charged on open only. Close spread is 0.
+    const totalCost = spreadBps + openFeeBps + closeFeeBps;
 
     const avFrom = pairInfo.from;
     const avTo = pairInfo.to;
@@ -427,9 +413,9 @@ export class VerantaAPI {
       mid_price: spreadMeta.coin_price || 0,
       slippage_bps: spreadBps,
       opening_slippage_bps: spreadBps,
-      closing_slippage_bps: closeSpread,
-      buy_slippage_bps: isLong ? spreadBps : closeSpread,
-      sell_slippage_bps: isLong ? closeSpread : spreadBps,
+      closing_slippage_bps: 0,
+      buy_slippage_bps: isLong ? spreadBps : 0,
+      sell_slippage_bps: isLong ? 0 : spreadBps,
       slippage_type: "opening_closing",
       open_fee_bps: openFeeBps,
       close_fee_bps: closeFeeBps,
