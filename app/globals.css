@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+ * ==========================================================================
+ * THEME: Neon Lime / Nebular Style
+ * Dark with patchy marble/smoke textures, rounded cards, pill badges
+ * ==========================================================================
+ */
+
+@layer base {
+  :root {
+    --th-bg: #0A0A0A;
+    --th-card: rgba(35, 35, 35, 0.7);
+    --th-card-solid: #1E1E1E;
+    --th-fg: #FFFFFF;
+    --th-fg-muted: #888888;
+    --th-fg-dim: #555555;
+    --th-primary: #D8F213;
+    --th-primary-dark: #748C1B;
+    --th-short: #EF4444;
+    --th-border: rgba(255, 255, 255, 0.08);
+
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 14%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 67 89% 51%;
+    --primary-foreground: 0 0% 5%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 73 68% 32%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 14%;
+    --ring: 67 89% 51%;
+    --radius: 1.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-white antialiased;
+    background-color: #0A0A0A;
+    position: relative;
+  }
+}
+
+@layer utilities {
+  /* Translucent frosted glass card */
+  .card-nebular {
+    background: rgba(40, 40, 40, 0.35);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 1.75rem;
+  }
+
+  .card-nebular-solid {
+    background: rgba(45, 45, 45, 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 1.75rem;
+  }
+
+  /* Winner card - translucent with subtle lime border */
+  .card-winner {
+    background: rgba(40, 40, 40, 0.35);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(216, 242, 19, 0.15);
+    border-radius: 1.75rem;
+  }
+
+  /* Pill badge - lime */
+  .badge-pill {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+    background: #D8F213;
+    color: #0A0A0A;
+  }
+
+  /* Pill badge - outline */
+  .badge-pill-outline {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #888;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(40, 40, 40, 0.8) 0%,
+      rgba(55, 55, 55, 0.8) 50%,
+      rgba(40, 40, 40, 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 0.75rem;
+  }
+
+  /* Background texture patches */
+  .bg-texture-patch {
+    position: relative;
+  }
+  
+  .bg-texture-patch::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('/bg-texture.jpg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.4;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+::selection {
+  background: rgba(216, 242, 19, 0.3);
+  color: #fff;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
