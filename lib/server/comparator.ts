@@ -138,7 +138,10 @@ export class FeeComparator {
   ): Promise<[string, any, any]> {
     if (!config.lighter_market_id) return ["lighter", null, null];
     try {
-      const ob = await this.lighter.getOrderbook(config.lighter_market_id);
+      const [ob] = await Promise.all([
+        this.lighter.getOrderbook(config.lighter_market_id),
+        this.lighter.loadMarketCache(),
+      ]);
       const r = await this.lighter.calculateExecutionCost(
         ob,
         orderSizeUsd,
@@ -160,7 +163,11 @@ export class FeeComparator {
   ): Promise<[string, any, any]> {
     if (!config.aster_symbol) return ["aster", null, null];
     try {
-      const ob = await this.aster.getOrderbook(config.aster_symbol);
+      const [ob] = await Promise.all([
+        this.aster.getOrderbook(config.aster_symbol),
+        this.aster.getFees(config.aster_symbol),
+        this.aster.getMaxLeverage(config.aster_symbol),
+      ]);
       const r = await this.aster.calculateExecutionCost(
         ob,
         orderSizeUsd,
@@ -224,7 +231,11 @@ export class FeeComparator {
   ): Promise<[string, any, any]> {
     if (!config.extended_symbol) return ["extended", null, null];
     try {
-      const ob = await this.extended.getOrderbook(config.extended_symbol);
+      const [ob] = await Promise.all([
+        this.extended.getOrderbook(config.extended_symbol),
+        this.extended.getFees(config.extended_symbol),
+        this.extended.getMaxLeverage(config.extended_symbol),
+      ]);
       const r = await this.extended.calculateExecutionCost(
         ob,
         orderSizeUsd,
@@ -310,7 +321,11 @@ export class FeeComparator {
   ): Promise<[string, any, any]> {
     if (!config.ondo_symbol) return ["ondo", null, null];
     try {
-      const ob = await this.ondo.getOrderbook(config.ondo_symbol);
+      const [ob] = await Promise.all([
+        this.ondo.getOrderbook(config.ondo_symbol),
+        this.ondo.getFees(config.ondo_symbol),
+        this.ondo.getMaxLeverage(config.ondo_symbol),
+      ]);
       const r = await this.ondo.calculateExecutionCost(
         ob,
         orderSizeUsd,

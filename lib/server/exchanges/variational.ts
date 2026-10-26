@@ -28,7 +28,23 @@ const CHROME_CIPHERS = [
 
 let sharedH2Session: http2.ClientHttp2Session | null = null;
 
-function getH2Session(): http2.ClientHttp2Session {
+function destroySharedSession(session?: http2.ClientHttp2Session | null) {
+  const target = session || sharedH2Session;
+  if (!target) return;
+  try {
+    target.destroy();
+  } catch {
+    // ignore
+  }
+  if (sharedH2Session === target) {
+    sharedH2Session = null;
+  }
+}
+
+function getH2Session(forceNew = false): http2.ClientHttp2Session {
+  if (forceNew && sharedH2Session) {
+    destroySharedSession(sharedH2Session);
+  }
   if (
     sharedH2Session &&
     !sharedH2Session.closed &&
@@ -42,35 +58,23 @@ function getH2Session(): http2.ClientHttp2Session {
     minVersion: "TLSv1.2",
     maxVersion: "TLSv1.3",
   });
-  session.on("error", () => {
-    try {
-      session.destroy();
-    } catch {
-      // ignore
-    }
-    if (sharedH2Session === session) sharedH2Session = null;
-  });
+  session.on("error", () => destroySharedSession(session));
   session.on("close", () => {
     if (sharedH2Session === session) sharedH2Session = null;
   });
-  session.setTimeout(30_000, () => {
-    try {
-      session.close();
-    } catch {
-      // ignore
-    }
-    if (sharedH2Session === session) sharedH2Session = null;
-  });
+  session.on("goaway", () => destroySharedSession(session));
+  session.setTimeout(20_000, () => destroySharedSession(session));
   sharedH2Session = session;
   return session;
 }
 
-function h2RequestJson(
+function h2RequestOnce(
   method: "GET" | "POST",
   path: string,
   bodyObj?: Record<string, any>,
   underlying: string = "XAU",
-  timeoutMs: number = 12_000
+  timeoutMs: number = 8_000,
+  forceNewSession: boolean = false
 ): Promise<Record<string, any> | null> {
   return new Promise((resolve) => {
     let settled = false;
@@ -82,12 +86,15 @@ function h2RequestJson(
 
     let client: http2.ClientHttp2Session;
     try {
-      client = getH2Session();
+      client = getH2Session(forceNewSession);
     } catch {
       return finish(null);
     }
 
-    const timer = setTimeout(() => finish(null), timeoutMs);
+    const timer = setTimeout(() => {
+      destroySharedSession(client);
+      finish(null);
+    }, timeoutMs);
 
     const bodyStr = bodyObj ? JSON.stringify(bodyObj) : "";
     const headers: http2.OutgoingHttpHeaders = {
@@ -128,16 +135,19 @@ function h2RequestJson(
       req.on("end", () => {
         clearTimeout(timer);
         if (status !== 200 || !raw) {
+          destroySharedSession(client);
           return finish(null);
         }
         try {
           finish(JSON.parse(raw));
         } catch {
+          destroySharedSession(client);
           finish(null);
         }
       });
       req.on("error", () => {
         clearTimeout(timer);
+        destroySharedSession(client);
         finish(null);
       });
 
@@ -147,9 +157,29 @@ function h2RequestJson(
       req.end();
     } catch {
       clearTimeout(timer);
+      destroySharedSession(client);
       finish(null);
     }
   });
+}
+
+async function h2RequestJson(
+  method: "GET" | "POST",
+  path: string,
+  bodyObj?: Record<string, any>,
+  underlying: string = "XAU",
+  timeoutMs: number = 8_000
+): Promise<Record<string, any> | null> {
+  const first = await h2RequestOnce(
+    method,
+    path,
+    bodyObj,
+    underlying,
+    timeoutMs,
+    false
+  );
+  if (first !== null) return first;
+  return h2RequestOnce(method, path, bodyObj, underlying, timeoutMs, true);
 }
 
 export interface VariationalSpec {
@@ -235,7 +265,12 @@ export class VariationalAPI {
   );
 
   private markCache: Record<string, RefMarkEntry> = {};
-  private configCache: { takerFeeBps: number; maxLevDefault: number; ts: number } | null = null;
+  private bulkMarkLoadedAt = 0;
+  private configCache: { takerFeeBps: number; maxLevDefault: number; ts: number } = {
+    takerFeeBps: 0,
+    maxLevDefault: 20,
+    ts: Date.now(),
+  };
 
   async fetchQuote(
     assetKey: string,
@@ -251,36 +286,41 @@ export class VariationalAPI {
     return h2RequestJson("POST", "/api/quotes/simple", body, underlying);
   }
 
-  private async getConfig(): Promise<{
-    takerFeeBps: number;
-    maxLevDefault: number;
-  }> {
-    if (this.configCache && Date.now() - this.configCache.ts < 600_000) {
-      return this.configCache;
+  private async loadBulkSupportedAssetsMarks(): Promise<void> {
+    if (Date.now() - this.bulkMarkLoadedAt < 15_000 && Object.keys(this.markCache).length > 0) {
+      return;
     }
-    let takerFeeBps = 0;
-    try {
-      const data = await h2RequestJson("GET", "/api/metadata/config");
-      if (data?.futures_taker_fee != null) {
-        takerFeeBps = Number(data.futures_taker_fee) * 10000;
+    const data = await h2RequestJson("GET", "/api/metadata/supported_assets");
+    if (!data || typeof data !== "object") return;
+    const now = Date.now();
+    for (const [assetKey, spec] of Object.entries(
+      VariationalAPI.VARIATIONAL_INSTRUMENTS
+    )) {
+      const rawList = data[spec.underlying] || data[assetKey];
+      const rec = Array.isArray(rawList) ? rawList[0] : rawList;
+      if (!rec || typeof rec !== "object") continue;
+      const mark = Number(rec.price);
+      const index = rec.index_price != null ? Number(rec.index_price) : null;
+      if (Number.isFinite(mark) && mark > 0) {
+        this.markCache[assetKey.toUpperCase()] = {
+          mark,
+          index: Number.isFinite(index) ? index : null,
+          ts: now,
+        };
       }
-    } catch {
-      // default 0 bps on Omni
     }
-    this.configCache = {
-      takerFeeBps,
-      maxLevDefault: 20,
-      ts: Date.now(),
-    };
-    return this.configCache;
+    this.bulkMarkLoadedAt = now;
   }
 
   private async referenceMark(assetKey: string): Promise<RefMarkEntry | null> {
     const key = assetKey.toUpperCase();
     const cached = this.markCache[key];
-    // Short 3s TTL so top-of-book mark stays fresh while sharing across quick size/direction toggles
-    if (cached && Date.now() - cached.ts < 3_000) {
+    if (cached && Date.now() - cached.ts < 15_000) {
       return cached;
+    }
+    await this.loadBulkSupportedAssetsMarks();
+    if (this.markCache[key] && Date.now() - this.markCache[key].ts < 15_000) {
+      return this.markCache[key];
     }
     const q = await this.fetchQuote(key, REF_QTY);
     if (!q) return cached || null;
@@ -313,10 +353,7 @@ export class VariationalAPI {
     const qty = orderSizeUsd / refEntry.mark;
     if (qty <= 0) return null;
 
-    const [quote, cfg] = await Promise.all([
-      this.fetchQuote(key, qty),
-      this.getConfig(),
-    ]);
+    const quote = await this.fetchQuote(key, qty);
     if (!quote) return null;
 
     const bid = Number(quote.bid);
@@ -334,13 +371,16 @@ export class VariationalAPI {
       return null;
     }
 
-    // Anchor per-side slippage to the unshifted top-of-book mark price (adjusted for any index tick),
+    // Anchor per-side slippage to the unshifted top-of-book mark price (scaled by live index movement),
     // matching Variational's UI formula: (ask - refMark)/refMark for Long, (refMark - bid)/refMark for Short.
-    const indexDelta =
-      refEntry.index !== null && indexPrice !== null && Number.isFinite(indexPrice)
-        ? indexPrice - refEntry.index
-        : 0;
-    const rawAnchor = refEntry.mark + indexDelta;
+    const rawAnchor =
+      refEntry.index &&
+      refEntry.index > 0 &&
+      indexPrice &&
+      Number.isFinite(indexPrice) &&
+      indexPrice > 0
+        ? refEntry.mark * (indexPrice / refEntry.index)
+        : refEntry.mark;
     const anchorMid =
       rawAnchor > bid && rawAnchor < ask ? rawAnchor : markPrice;
     if (anchorMid <= 0) return null;
@@ -356,8 +396,8 @@ export class VariationalAPI {
     const openingSlip = isLong ? buySlipBps : sellSlipBps;
     const closingSlip = isLong ? sellSlipBps : buySlipBps;
 
-    const feeBps = cfg.takerFeeBps;
-    const maxLev = floorLeverage(cfg.maxLevDefault);
+    const feeBps = this.configCache.takerFeeBps;
+    const maxLev = floorLeverage(this.configCache.maxLevDefault);
     const totalCostBps = buySlipBps + sellSlipBps + 2 * feeBps;
 
     let filled = true;

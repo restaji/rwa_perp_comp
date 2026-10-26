@@ -39,14 +39,25 @@ export class HyperliquidAPI {
   }
 
   private async postInfo(payload: Record<string, any>): Promise<any> {
-    const res = await fetch(BASE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(BASE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          cache: "no-store",
+        });
+        if (res.status === 429 && attempt < 2) {
+          await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+          continue;
+        }
+        if (!res.ok) return null;
+        return res.json();
+      } catch {
+        if (attempt === 2) return null;
+      }
+    }
+    return null;
   }
 
   private async fetchFeeConfig(): Promise<void> {
