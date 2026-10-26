@@ -73,7 +73,7 @@ export const ASSETS: Record<string, AssetConfig> = {
   WTI: cfg("WTI/USD", "WTI", "commodity", "CL", 145, "CLUSDT", "CLUSD", "WTI-USD", 30000008, null, null, { ondo_symbol: "WTI-USD.P", pacifica_symbol: "CL" }),
   BRENT: cfg("BRENT/USD", "BRENT", "commodity", "BRENTOIL", 159, null, "BRENTUSD", "XBR-USD", 30000017, null, null, { ondo_symbol: "BRENT-USD.P" }),
 
-  // Forex
+  // Forex (only Veranta-listed pairs)
   EURUSD: cfg("EUR/USD", "EURUSD", "forex", "EUR", 96, null, "EURUSD", "EUR-USD", null, null, null, { pacifica_symbol: "EURUSD" }),
   GBPUSD: cfg("GBP/USD", "GBPUSD", "forex", "GBP", 97, null, "GBPUSD", null, null, null, null),
   USDJPY: cfg("USD/JPY", "USDJPY", "forex", "JPY", 98, null, "USDJPY", "USDJPY-USD", null, null, null, { pacifica_symbol: "USDJPY" }),
@@ -83,15 +83,7 @@ export const ASSETS: Record<string, AssetConfig> = {
   AUDUSD: cfg("AUD/USD", "AUDUSD", "forex", null, 106, null, "AUDUSD", null, null, null, null),
   NZDUSD: cfg("NZD/USD", "NZDUSD", "forex", null, 107, null, "NZDUSD", null, null, null, null),
   USDSGD: cfg("USD/SGD", "USDSGD", "forex", null, null, null, null, null, null, null, null),
-  USDTRY: cfg("USD/TRY", "USDTRY", "forex", null, null, null, null, null, null, null, null),
   USDCNH: cfg("USD/CNH", "USDCNH", "forex", null, null, null, null, null, null, null, null),
-  USDINR: cfg("USD/INR", "USDINR", "forex", null, null, null, null, null, null, null, null),
-  USDKRW: cfg("USD/KRW", "USDKRW", "forex", "KRW", 105, null, "USDKRW", null, null, null, null),
-  USDMXN: cfg("USD/MXN", "USDMXN", "forex", null, null, null, "USDMXN", null, null, null, null),
-  USDZAR: cfg("USD/ZAR", "USDZAR", "forex", null, null, null, null, null, null, null, null),
-  USDBRL: cfg("USD/BRL", "USDBRL", "forex", null, null, null, null, null, null, null, null),
-  USDIDR: cfg("USD/IDR", "USDIDR", "forex", null, null, null, null, null, null, null, null),
-  USDTWD: cfg("USD/TWD", "USDTWD", "forex", null, null, null, null, null, null, null, null),
 
   // MAG7 Stocks
   AAPL: cfg("AAPL/USD", "AAPL", "stock", "AAPL", 113, "AAPLUSDT", "AAPLUSD", "AAPL_24_5-USD", 30000012, null, null, { ondo_symbol: "AAPL-USD.P" }),
@@ -207,15 +199,6 @@ export const ASSETS: Record<string, AssetConfig> = {
   KRAFTONKRW: cfg("259960/KRW Krafton", "KRAFTONKRW", "stock", null, null, null, null, null, null),
   HANWHASYSKRW: cfg("272210/KRW Hanwha Systems", "HANWHASYSKRW", "stock", null, null, null, null, null, null),
   LGESKRW: cfg("373220/KRW LG Energy Solution", "LGESKRW", "stock", null, null, null, null, null, null),
-
-  // Korean equities (/USD on other venues)
-  SAMSUNG: cfg("SAMSUNG/USD Samsung Electronics", "SAMSUNG", "stock", "SMSN", 162, "SAMSUNGUSDT", null, "SAMSUNG-USD", 30000079, null, "SAMSUNG_USDT_Perp", { ondo_symbol: "SMSN-USD.P", pacifica_symbol: "SAMSUNG" }),
-  HYUNDAI: cfg("HYUNDAI/USD Hyundai Motor", "HYUNDAI", "stock", "HYUNDAI", 160, "HYUNDAIUSDT", null, null, null, null, "HYUNDAI_USDT_Perp"),
-  NAVER: cfg("NAVER/USD NAVER", "NAVER", "stock", null, null, null, null, null, 30000145, null, "NAVER_USDT_Perp"),
-  LGELEC: cfg("LGELEC/USD LG Electronics", "LGELEC", "stock", null, null, null, null, null, 30000146, null, "LGELECTRONICS_USDT_Perp"),
-  HANMI: cfg("HANMI/USD Hanmi Semiconductor", "HANMI", "stock", null, null, null, null, null, 30000147, null, "HANMI_USDT_Perp"),
-  SAMSUNGEM: cfg("SAMSUNGEM/USD Samsung Electro-Mechanics", "SAMSUNGEM", "stock", null, null, null, null, null, 30000148, null, "SAMSUNGEM_USDT_Perp"),
-  KODEX200: cfg("KODEX200/USD KODEX 200", "KODEX200", "stock", "KR200", null, null, null, "KR200-USD", 30000149, null, "KODEX200_USDT_Perp", { extended_display_symbol: "KR200/USD" }),
 };
 
 export interface OrderbookLevel {

@@ -33,7 +33,7 @@ export interface Asset {
 }
 
 const COMMODITY_KEYS = new Set(["XAU", "XAG", "WTI", "BRENT"]);
-const INDEX_KEYS = new Set(["SPY", "QQQ", "US500", "US100", "EWY", "KODEX200"]);
+const INDEX_KEYS = new Set(["SPY", "QQQ", "US500", "US100", "EWY", "KODEX200KRW"]);
 
 export function categorizeAsset(key: string): AssetCategory {
   if (COMMODITY_KEYS.has(key)) return "Commodities";
@@ -42,14 +42,14 @@ export function categorizeAsset(key: string): AssetCategory {
   return "Equities";
 }
 
-// Assets matching the Python backend /api/assets list
+// Assets matching the Veranta-anchored /api/assets list
 export const ASSETS: Asset[] = [
   // Commodities
   { id: "XAU",   symbol: "XAU/USD",   name: "Gold",             category: "Commodities" },
   { id: "XAG",   symbol: "XAG/USD",   name: "Silver",           category: "Commodities" },
   { id: "WTI",   symbol: "WTI/USD",   name: "WTI Crude Oil",    category: "Commodities" },
   { id: "BRENT", symbol: "BRENT/USD", name: "Brent Crude Oil",  category: "Commodities" },
-  // Forex
+  // Forex (Veranta-listed only)
   { id: "EURUSD", symbol: "EUR/USD", name: "Euro",               category: "Forex" },
   { id: "GBPUSD", symbol: "GBP/USD", name: "British Pound",      category: "Forex" },
   { id: "USDJPY", symbol: "USD/JPY", name: "Japanese Yen",       category: "Forex" },
@@ -59,15 +59,7 @@ export const ASSETS: Asset[] = [
   { id: "NZDUSD", symbol: "NZD/USD", name: "New Zealand Dollar", category: "Forex" },
   { id: "USDSEK", symbol: "USD/SEK", name: "Swedish Krona",      category: "Forex" },
   { id: "USDSGD", symbol: "USD/SGD", name: "Singapore Dollar",   category: "Forex" },
-  { id: "USDTRY", symbol: "USD/TRY", name: "Turkish Lira",       category: "Forex" },
   { id: "USDCNH", symbol: "USD/CNH", name: "Chinese Yuan (Offshore)", category: "Forex" },
-  { id: "USDINR", symbol: "USD/INR", name: "Indian Rupee",       category: "Forex" },
-  { id: "USDKRW", symbol: "USD/KRW", name: "South Korean Won",   category: "Forex" },
-  { id: "USDMXN", symbol: "USD/MXN", name: "Mexican Peso",       category: "Forex" },
-  { id: "USDZAR", symbol: "USD/ZAR", name: "South African Rand", category: "Forex" },
-  { id: "USDBRL", symbol: "USD/BRL", name: "Brazilian Real",     category: "Forex" },
-  { id: "USDIDR", symbol: "USD/IDR", name: "Indonesian Rupiah",  category: "Forex" },
-  { id: "USDTWD", symbol: "USD/TWD", name: "Taiwan Dollar",      category: "Forex" },
   // Equities + Indices
   { id: "AAPL", symbol: "AAPL/USD", name: "Apple",           category: "Equities" },
   { id: "MSFT", symbol: "MSFT/USD", name: "Microsoft",       category: "Equities" },
@@ -157,24 +149,25 @@ export const ASSETS: Asset[] = [
   { id: "SOFI", symbol: "SOFI/USD", name: "SoFi",               category: "Equities" },
   { id: "GRAB", symbol: "GRAB/USD", name: "Grab",               category: "Equities" },
   { id: "ASTS", symbol: "ASTS/USD", name: "AST SpaceMobile",    category: "Equities" },
-  // Korea
-  { id: "SAMSUNG",      symbol: "SAMSUNG/USD",      name: "Samsung Electronics",        category: "Equities" },
-  { id: "HYUNDAI",      symbol: "HYUNDAI/USD",      name: "Hyundai Motor",              category: "Equities" },
-  { id: "NAVER",        symbol: "NAVER/USD",        name: "NAVER",                      category: "Equities" },
-  { id: "LGELEC",       symbol: "LGELEC/USD",       name: "LG Electronics",             category: "Equities" },
-  { id: "HANMI",        symbol: "HANMI/USD",        name: "Hanmi Semiconductor",        category: "Equities" },
-  { id: "SAMSUNGEM",    symbol: "SAMSUNGEM/USD",    name: "Samsung Electro-Mechanics",  category: "Equities" },
-  { id: "KODEX200",     symbol: "KODEX200/USD",     name: "KODEX 200 ETF",              category: "Indices" },
-  { id: "HYUNDAISTEEL", symbol: "HYUNDAISTEEL/USD", name: "Hyundai Steel",              category: "Equities" },
-  { id: "NHIS",         symbol: "NHIS/USD",         name: "NH Investment & Securities", category: "Equities" },
-  { id: "HDKSOE",       symbol: "HDKSOE/USD",       name: "HD Korea Shipbuilding",      category: "Equities" },
-  { id: "HMM",          symbol: "HMM/USD",          name: "HMM",                        category: "Equities" },
-  { id: "SKINC",        symbol: "SKINC/USD",        name: "SK Inc",                     category: "Equities" },
-  { id: "KAKAO",        symbol: "KAKAO/USD",        name: "Kakao",                      category: "Equities" },
-  { id: "LGCHEM",       symbol: "LGCHEM/USD",       name: "LG Chem",                    category: "Equities" },
-  { id: "KRAFTON",      symbol: "KRAFTON/USD",      name: "Krafton",                    category: "Equities" },
-  { id: "HANWHASYS",    symbol: "HANWHASYS/USD",    name: "Hanwha Systems",             category: "Equities" },
-  { id: "LGES",         symbol: "LGES/USD",         name: "LG Energy Solution",         category: "Equities" },
+  { id: "BOT",  symbol: "BOT/USD",  name: "RoboStrategy",       category: "Equities" },
+  // Korea (/KRW on Veranta)
+  { id: "SAMSUNGKRW",      symbol: "005930/KRW", name: "Samsung Electronics",        category: "Equities" },
+  { id: "HYUNDAIKRW",      symbol: "005380/KRW", name: "Hyundai Motor",              category: "Equities" },
+  { id: "NAVERKRW",        symbol: "035420/KRW", name: "NAVER",                      category: "Equities" },
+  { id: "LGELECKRW",       symbol: "066570/KRW", name: "LG Electronics",             category: "Equities" },
+  { id: "HANMIKRW",        symbol: "042700/KRW", name: "Hanmi Semiconductor",        category: "Equities" },
+  { id: "SAMSUNGEMKRW",    symbol: "009150/KRW", name: "Samsung Electro-Mechanics",  category: "Equities" },
+  { id: "KODEX200KRW",     symbol: "069500/KRW", name: "KODEX 200 ETF",              category: "Indices" },
+  { id: "HYUNDAISTEELKRW", symbol: "004020/KRW", name: "Hyundai Steel",              category: "Equities" },
+  { id: "NHISKRW",         symbol: "005940/KRW", name: "NH Investment & Securities", category: "Equities" },
+  { id: "HDKSOEKRW",       symbol: "009540/KRW", name: "HD Korea Shipbuilding",      category: "Equities" },
+  { id: "HMMKRW",          symbol: "011200/KRW", name: "HMM",                        category: "Equities" },
+  { id: "SKINCKRW",        symbol: "034730/KRW", name: "SK Inc",                     category: "Equities" },
+  { id: "KAKAOKRW",        symbol: "035720/KRW", name: "Kakao",                      category: "Equities" },
+  { id: "LGCHEMKRW",       symbol: "051910/KRW", name: "LG Chem",                    category: "Equities" },
+  { id: "KRAFTONKRW",      symbol: "259960/KRW", name: "Krafton",                    category: "Equities" },
+  { id: "HANWHASYSKRW",    symbol: "272210/KRW", name: "Hanwha Systems",             category: "Equities" },
+  { id: "LGESKRW",         symbol: "373220/KRW", name: "LG Energy Solution",         category: "Equities" },
 ];
 
 export const ORDER_SIZES = [

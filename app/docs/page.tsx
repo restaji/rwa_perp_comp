@@ -599,8 +599,6 @@ export default function DocsPage() {
                       { asset: "USD/CHF", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
                       { asset: "AUD/USD", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
                       { asset: "NZD/USD", hl: "—", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "USD/KRW", hl: "✓", lt: "✓", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
-                      { asset: "USD/MXN", hl: "—", lt: "—", as: "—", av: "✓", os: "✓", ex: "—", eg: "—", gr: "—", va: "—", on: "—", pa: "—" },
                       { asset: "Apple (AAPL)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
                       { asset: "Microsoft (MSFT)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "—" },
                       { asset: "Google (GOOG)", hl: "✓", lt: "✓", as: "✓", av: "✓", os: "✓", ex: "✓", eg: "✓", gr: "—", va: "—", on: "✓", pa: "✓" },

@@ -54,9 +54,9 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  if (!(asset in ASSETS)) {
+  if (!(asset in ASSETS) || !(await comparator.veranta.isPairListed(asset))) {
     return NextResponse.json(
-      { error: `Asset ${asset} not found` },
+      { error: `Asset ${asset} not found or not listed on Veranta` },
       { status: 400 }
     );
   }

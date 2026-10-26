@@ -539,8 +539,6 @@ for exchange in ['hyperliquid', 'lighter', 'aster', 'veranta', 'ostium', 'extend
                       { key: "USDCHF", name: "US Dollar / Swiss Franc", category: "Forex" },
                       { key: "AUDUSD", name: "Australian Dollar / US Dollar", category: "Forex" },
                       { key: "NZDUSD", name: "New Zealand Dollar / US Dollar", category: "Forex" },
-                      { key: "USDKRW", name: "US Dollar / Korean Won", category: "Forex" },
-                      { key: "USDMXN", name: "US Dollar / Mexican Peso", category: "Forex" },
                       { key: "AAPL", name: "Apple Inc.", category: "Equities" },
                       { key: "MSFT", name: "Microsoft Corporation", category: "Equities" },
                       { key: "GOOG", name: "Alphabet Inc.", category: "Equities" },
