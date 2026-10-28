@@ -687,17 +687,7 @@ export class FeeComparator {
       }
       const slippage = finite(exData.slippage_bps);
       let effectiveSpread: number;
-      if (name === "avantis") {
-        const openS = exData.opening_slippage_bps;
-        if (openS == null || !Number.isFinite(Number(openS))) {
-          exData.total_cost_bps = null;
-          exData.exchange = name;
-          exData.filled = false;
-          continue;
-        }
-        // Veranta charges spread on open only, so close spread is not added.
-        effectiveSpread = Number(openS);
-      } else if (
+      if (
         exData.opening_slippage_bps == null ||
         exData.closing_slippage_bps == null
       ) {

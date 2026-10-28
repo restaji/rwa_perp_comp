@@ -302,9 +302,9 @@ export default function DocsPage() {
                 fetched from Veranta{"'"}s risk API and scale with position size.
               </p>
 
-              <InfoBox title="One-Way Spread">
-                Veranta is unique — spread only applies when opening a position, not when closing.
-                This means the spread cost is half what it would be on other oracle-based exchanges.
+              <InfoBox title="Round-Trip Spread">
+                Spread applies on both open and close. Each side is quoted from the risk API,
+                so a dynamic market can show a different close spread than the open spread.
               </InfoBox>
 
               <h3 className="text-lg font-medium text-white mt-8 mb-3">Fee Structure</h3>
@@ -506,7 +506,7 @@ export default function DocsPage() {
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
-                      <td className="py-2.5 px-3 text-center text-[#D8F213]">1× open only</td>
+                      <td className="py-2.5 px-3 text-center text-[#D8F213]">Open + close</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
                       <td className="py-2.5 px-3 text-center">2× round trip</td>
