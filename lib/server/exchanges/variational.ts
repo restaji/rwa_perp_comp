@@ -543,6 +543,22 @@ export class VariationalAPI {
           )) {
             equityOverrides[om[1].toUpperCase()] = Number(om[2]);
           }
+          // Omni maps a ticker→cap object onto max_leverage (e.g. COCOAP:"5").
+          const overrideVar = text.match(
+            /Object\.entries\((\w+)\)\.map\(\(\[\w+,\w+\]\)=>\[\w+,\{[^}]*max_leverage:\w+/
+          );
+          if (overrideVar) {
+            const body = text.match(
+              new RegExp(`${escapeRegex(overrideVar[1])}=\\{([^}]+)\\}`)
+            );
+            if (body) {
+              for (const om of Array.from(
+                body[1].matchAll(/([A-Za-z0-9_]+):"(\d+(?:\.\d+)?)"/g)
+              )) {
+                equityOverrides[om[1].toUpperCase()] = Number(om[2]);
+              }
+            }
+          }
 
           if (takerFeeBps === null) {
             const fm = text.match(/futures_taker_fee:"?(\d+(?:\.\d+)?)"?/);
@@ -635,8 +651,14 @@ export class VariationalAPI {
     if (sym in cfg.equityOverrides) {
       return floorLeverage(cfg.equityOverrides[sym]);
     }
+    // Same branch as Omni's max-leverage helper:
+    // swap → swap default, anything with asset_class (RWA perp) → tradfi default,
+    // crypto perp → crypto default. Quote/metadata APIs do not return this cap.
     if (spec.instrument_type === "swap" || spec.instrument_type === "perpetual_cfd") {
       return floorLeverage(cfg.swapDefault);
+    }
+    if (spec.instrument_type === "perpetual_rwa_future") {
+      return floorLeverage(cfg.tradfiDefault);
     }
     return floorLeverage(cfg.perpDefault ?? cfg.tradfiDefault);
   }
