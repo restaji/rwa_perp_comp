@@ -30,6 +30,7 @@ export interface AssetConfig {
   pacifica_symbol?: string | null;
   risex_market_id?: number | null;
   txflow_symbol?: string | null;
+  arcus_symbol?: string | null;
 }
 
 function cfg(
@@ -50,6 +51,7 @@ function cfg(
     pacifica_symbol?: string | null;
     risex_market_id?: number | null;
     txflow_symbol?: string | null;
+    arcus_symbol?: string | null;
   } = {}
 ): AssetConfig {
   return {
@@ -69,14 +71,15 @@ function cfg(
     pacifica_symbol: opts.pacifica_symbol ?? null,
     risex_market_id: opts.risex_market_id ?? null,
     txflow_symbol: opts.txflow_symbol ?? null,
+    arcus_symbol: opts.arcus_symbol ?? null,
   };
 }
 
 export const ASSETS: Record<string, AssetConfig> = {
   // Commodities
-  XAU: cfg("XAU/USD", "XAU", "commodity", "GOLD", 92, "XAUUSDT", "XAUUSD", "XAU-USD", 30000005, null, "XAU_USDT_Perp", { ondo_symbol: "XAU-USD.P", pacifica_symbol: "XAU", risex_market_id: 17, txflow_symbol: "XAU-USDC" }),
-  XAG: cfg("XAG/USD", "XAG", "commodity", "SILVER", 93, "XAGUSDT", "XAGUSD", "XAG-USD", 30000006, null, "XAG_USDT_Perp", { ondo_symbol: "XAG-USD.P", pacifica_symbol: "XAG", risex_market_id: 18, txflow_symbol: "XAG-USDC" }),
-  WTI: cfg("WTI/USD", "WTI", "commodity", "CL", 145, "CLUSDT", "CLUSD", "WTI-USD", 30000008, null, null, { ondo_symbol: "WTI-USD.P", pacifica_symbol: "CL", risex_market_id: 19, txflow_symbol: "CL-USDC" }),
+  XAU: cfg("XAU/USD", "XAU", "commodity", "GOLD", 92, "XAUUSDT", "XAUUSD", "XAU-USD", 30000005, null, "XAU_USDT_Perp", { ondo_symbol: "XAU-USD.P", pacifica_symbol: "XAU", risex_market_id: 17, txflow_symbol: "XAU-USDC", arcus_symbol: "GLD-USD" }),
+  XAG: cfg("XAG/USD", "XAG", "commodity", "SILVER", 93, "XAGUSDT", "XAGUSD", "XAG-USD", 30000006, null, "XAG_USDT_Perp", { ondo_symbol: "XAG-USD.P", pacifica_symbol: "XAG", risex_market_id: 18, txflow_symbol: "XAG-USDC", arcus_symbol: "SLV-USD" }),
+  WTI: cfg("WTI/USD", "WTI", "commodity", "CL", 145, "CLUSDT", "CLUSD", "WTI-USD", 30000008, null, null, { ondo_symbol: "WTI-USD.P", pacifica_symbol: "CL", risex_market_id: 19, txflow_symbol: "CL-USDC", arcus_symbol: "USO-USD" }),
   BRENT: cfg("BRENT/USD", "BRENT", "commodity", "BRENTOIL", 159, null, "BRENTUSD", "XBR-USD", 30000017, null, null, { ondo_symbol: "BRENT-USD.P", risex_market_id: 20, txflow_symbol: "BZ-USDC" }),
 
   // Forex (only Veranta-listed pairs)
@@ -92,49 +95,49 @@ export const ASSETS: Record<string, AssetConfig> = {
   USDCNH: cfg("USD/CNH", "USDCNH", "forex", null, null, null, null, null, null, null, null),
 
   // MAG7 Stocks
-  AAPL: cfg("AAPL/USD", "AAPL", "stock", "AAPL", 113, "AAPLUSDT", "AAPLUSD", "AAPL_24_5-USD", 30000012, null, null, { ondo_symbol: "AAPL-USD.P", txflow_symbol: "AAPL-USDC" }),
-  MSFT: cfg("MSFT/USD", "MSFT", "stock", "MSFT", 115, "MSFTUSDT", "MSFTUSD", "MSFT_24_5-USD", 30000029, null, null, { ondo_symbol: "MSFT-USD.P", txflow_symbol: "MSFT-USDC" }),
-  GOOG: cfg("GOOG/USD", "GOOG", "stock", "GOOGL", 116, "GOOGUSDT", "GOOGUSD", "GOOG_24_5-USD", 30000022, null, null, { ondo_symbol: "GOOGL-USD.P", pacifica_symbol: "GOOGL", risex_market_id: 42, txflow_symbol: "GOOGL-USDC" }),
-  AMZN: cfg("AMZN/USD", "AMZN", "stock", "AMZN", 114, "AMZNUSDT", "AMZNUSD", "AMZN_24_5-USD", 30000013, null, "AMZN_USDT_Perp", { ondo_symbol: "AMZN-USD.P", txflow_symbol: "AMZN-USDC" }),
-  META: cfg("META/USD", "META", "stock", "META", 117, "METAUSDT", "METAUSD", "META_24_5-USD", 30000028, null, null, { ondo_symbol: "META-USD.P", risex_market_id: 37, txflow_symbol: "META-USDC" }),
-  NVDA: cfg("NVDA/USD", "NVDA", "stock", "NVDA", 110, "NVDAUSDT", "NVDAUSD", "NVDA_24_5-USD", 30000020, null, null, { ondo_symbol: "NVDA-USD.P", pacifica_symbol: "NVDA", risex_market_id: 36, txflow_symbol: "NVDA-USDC" }),
-  TSLA: cfg("TSLA/USD", "TSLA", "stock", "TSLA", 112, "TSLAUSDT", "TSLAUSD", "TSLA_24_5-USD", 30000023, null, "TSLA_USDT_Perp", { ondo_symbol: "TSLA-USD.P", pacifica_symbol: "TSLA", risex_market_id: 32, txflow_symbol: "TSLA-USDC" }),
+  AAPL: cfg("AAPL/USD", "AAPL", "stock", "AAPL", 113, "AAPLUSDT", "AAPLUSD", "AAPL_24_5-USD", 30000012, null, null, { ondo_symbol: "AAPL-USD.P", txflow_symbol: "AAPL-USDC", arcus_symbol: "AAPL-USD" }),
+  MSFT: cfg("MSFT/USD", "MSFT", "stock", "MSFT", 115, "MSFTUSDT", "MSFTUSD", "MSFT_24_5-USD", 30000029, null, null, { ondo_symbol: "MSFT-USD.P", txflow_symbol: "MSFT-USDC", arcus_symbol: "MSFT-USD" }),
+  GOOG: cfg("GOOG/USD", "GOOG", "stock", "GOOGL", 116, "GOOGUSDT", "GOOGUSD", "GOOG_24_5-USD", 30000022, null, null, { ondo_symbol: "GOOGL-USD.P", pacifica_symbol: "GOOGL", risex_market_id: 42, txflow_symbol: "GOOGL-USDC", arcus_symbol: "GOOGL-USD" }),
+  AMZN: cfg("AMZN/USD", "AMZN", "stock", "AMZN", 114, "AMZNUSDT", "AMZNUSD", "AMZN_24_5-USD", 30000013, null, "AMZN_USDT_Perp", { ondo_symbol: "AMZN-USD.P", txflow_symbol: "AMZN-USDC", arcus_symbol: "AMZN-USD" }),
+  META: cfg("META/USD", "META", "stock", "META", 117, "METAUSDT", "METAUSD", "META_24_5-USD", 30000028, null, null, { ondo_symbol: "META-USD.P", risex_market_id: 37, txflow_symbol: "META-USDC", arcus_symbol: "META-USD" }),
+  NVDA: cfg("NVDA/USD", "NVDA", "stock", "NVDA", 110, "NVDAUSDT", "NVDAUSD", "NVDA_24_5-USD", 30000020, null, null, { ondo_symbol: "NVDA-USD.P", pacifica_symbol: "NVDA", risex_market_id: 36, txflow_symbol: "NVDA-USDC", arcus_symbol: "NVDA-USD" }),
+  TSLA: cfg("TSLA/USD", "TSLA", "stock", "TSLA", 112, "TSLAUSDT", "TSLAUSD", "TSLA_24_5-USD", 30000023, null, "TSLA_USDT_Perp", { ondo_symbol: "TSLA-USD.P", pacifica_symbol: "TSLA", risex_market_id: 32, txflow_symbol: "TSLA-USDC", arcus_symbol: "TSLA-USD" }),
 
   // Indices
-  US500: cfg("US500/USD", "US500", "index", "SP500", 180, null, "SPXUSD", "SPX500m-USD", 30000010, null, null, { extended_display_symbol: "SPX/USD", ondo_symbol: "SPY-USD.P", pacifica_symbol: "SP500", risex_market_id: 27, txflow_symbol: "SPY-USDC" }),
-  US100: cfg("US100/USD", "US100", "index", "XYZ100", 181, "QQQUSDT", "NDXUSD", "TECH100m-USD", 30000011, null, null, { extended_display_symbol: "NDX/USD", ondo_symbol: "QQQ-USD.P", risex_market_id: 26, txflow_symbol: "QQQ-USDC" }),
+  US500: cfg("US500/USD", "US500", "index", "SP500", 180, null, "SPXUSD", "SPX500m-USD", 30000010, null, null, { extended_display_symbol: "SPX/USD", ondo_symbol: "SPY-USD.P", pacifica_symbol: "SP500", risex_market_id: 27, txflow_symbol: "SPY-USDC", arcus_symbol: "SPY-USD" }),
+  US100: cfg("US100/USD", "US100", "index", "XYZ100", 181, "QQQUSDT", "NDXUSD", "TECH100m-USD", 30000011, null, null, { extended_display_symbol: "NDX/USD", ondo_symbol: "QQQ-USD.P", risex_market_id: 26, txflow_symbol: "QQQ-USDC", arcus_symbol: "QQQ-USD" }),
 
   // Additional equities
-  COIN: cfg("COIN/USD", "COIN", "stock", "COIN", 109, null, "COINUSD", "COIN_24_5-USD", 30000025, null, "COIN_USDT_Perp", { ondo_symbol: "COIN-USD.P", txflow_symbol: "COIN-USDC" }),
-  HOOD: cfg("HOOD/USD", "HOOD", "stock", "HOOD", 108, "HOODUSDT", "HOODUSD", "HOOD_24_5-USD", 30000027, null, "HOOD_USDT_Perp", { ondo_symbol: "HOOD-USD.P", pacifica_symbol: "HOOD", risex_market_id: 34, txflow_symbol: "HOOD-USDC" }),
-  SPCX: cfg("SPCX/USD", "SPCX", "stock", "SPCX", 194, "SPCXUSDT", null, "SPCX-USD", 30000076, null, "SPCX_USDT_Perp", { extended_display_symbol: "SPCX/USD", ondo_symbol: "SPCX-USD.P", pacifica_symbol: "SPCX", risex_market_id: 22, txflow_symbol: "SPCX-USDC" }),
-  AMD: cfg("AMD/USD", "AMD", "stock", "AMD", 138, "AMDUSDT", "AMDUSD", "AMD_24_5-USD", 30000021, null, "AMD_USDT_Perp", { ondo_symbol: "AMD-USD.P", txflow_symbol: "AMD-USDC" }),
-  INTC: cfg("INTC/USD", "INTC", "stock", "INTC", 137, "INTCUSDT", "INTCUSD", "INTC_24_5-USD", 30000032, null, "INTC_USDT_Perp", { ondo_symbol: "INTC-USD.P", risex_market_id: 28, txflow_symbol: "INTC-USDC" }),
-  MU: cfg("MU/USD", "MU", "stock", "MU", 164, "MUUSDT", "MUUSD", "MU_24_5-USD", 30000035, null, "MU_USDT_Perp", { ondo_symbol: "MU-USD.P", pacifica_symbol: "MU", risex_market_id: 25, txflow_symbol: "MU-USDC" }),
-  SNDK: cfg("SNDK/USD", "SNDK", "stock", "SNDK", 139, "SNDKUSDT", "SNDKUSD", "SNDK_24_5-USD", 30000034, null, "SNDK_USDT_Perp", { ondo_symbol: "SNDK-USD.P", pacifica_symbol: "SNDK", risex_market_id: 21, txflow_symbol: "SNDK-USDC" }),
+  COIN: cfg("COIN/USD", "COIN", "stock", "COIN", 109, null, "COINUSD", "COIN_24_5-USD", 30000025, null, "COIN_USDT_Perp", { ondo_symbol: "COIN-USD.P", txflow_symbol: "COIN-USDC", arcus_symbol: "COIN-USD" }),
+  HOOD: cfg("HOOD/USD", "HOOD", "stock", "HOOD", 108, "HOODUSDT", "HOODUSD", "HOOD_24_5-USD", 30000027, null, "HOOD_USDT_Perp", { ondo_symbol: "HOOD-USD.P", pacifica_symbol: "HOOD", risex_market_id: 34, txflow_symbol: "HOOD-USDC", arcus_symbol: "HOOD-USD" }),
+  SPCX: cfg("SPCX/USD", "SPCX", "stock", "SPCX", 194, "SPCXUSDT", null, "SPCX-USD", 30000076, null, "SPCX_USDT_Perp", { extended_display_symbol: "SPCX/USD", ondo_symbol: "SPCX-USD.P", pacifica_symbol: "SPCX", risex_market_id: 22, txflow_symbol: "SPCX-USDC", arcus_symbol: "SPCX-USD" }),
+  AMD: cfg("AMD/USD", "AMD", "stock", "AMD", 138, "AMDUSDT", "AMDUSD", "AMD_24_5-USD", 30000021, null, "AMD_USDT_Perp", { ondo_symbol: "AMD-USD.P", txflow_symbol: "AMD-USDC", arcus_symbol: "AMD-USD" }),
+  INTC: cfg("INTC/USD", "INTC", "stock", "INTC", 137, "INTCUSDT", "INTCUSD", "INTC_24_5-USD", 30000032, null, "INTC_USDT_Perp", { ondo_symbol: "INTC-USD.P", risex_market_id: 28, txflow_symbol: "INTC-USDC", arcus_symbol: "INTC-USD" }),
+  MU: cfg("MU/USD", "MU", "stock", "MU", 164, "MUUSDT", "MUUSD", "MU_24_5-USD", 30000035, null, "MU_USDT_Perp", { ondo_symbol: "MU-USD.P", pacifica_symbol: "MU", risex_market_id: 25, txflow_symbol: "MU-USDC", arcus_symbol: "MU-USD" }),
+  SNDK: cfg("SNDK/USD", "SNDK", "stock", "SNDK", 139, "SNDKUSDT", "SNDKUSD", "SNDK_24_5-USD", 30000034, null, "SNDK_USDT_Perp", { ondo_symbol: "SNDK-USD.P", pacifica_symbol: "SNDK", risex_market_id: 21, txflow_symbol: "SNDK-USDC", arcus_symbol: "SNDK-USD" }),
   CBRS: cfg("CBRS/USD", "CBRS", "stock", "CBRS", 175, "CBRSUSDT", null, "CBRS_24_5-USD", 30000078, null, "CBRS_USDT_Perp", { ondo_symbol: "CBRS-USD.P", txflow_symbol: "CBRS-USDC" }),
   EWY: cfg("EWY/USD", "EWY", "stock", "EWY", 166, "EWYUSDT", null, "EWY_24_5-USD", 30000018, null, "EWY_USDT_Perp", { ondo_symbol: "EWY-USD.P", txflow_symbol: "EWY-USDC" }),
-  BABA: cfg("BABA/USD", "BABA", "stock", "BABA", 177, "BABAUSDT", null, "BABA_24_5-USD", null, null, "BABA_USDT_Perp", { ondo_symbol: "BABA-USD.P" }),
-  CRCL: cfg("CRCL/USD", "CRCL", "stock", "CRCL", 121, "CRCLUSDT", "CRCLUSD", "CRCL_24_5-USD", 30000026, null, "CRCL_USDT_Perp", { ondo_symbol: "CRCL-USD.P", pacifica_symbol: "CRCL", risex_market_id: 31, txflow_symbol: "CRCL-USDC" }),
-  MRVL: cfg("MRVL/USD", "MRVL", "stock", "MRVL", 174, "MRVLUSDT", null, "MRVL-USD", 30000077, null, "MRVL_USDT_Perp", { ondo_symbol: "MRVL-USD.P", txflow_symbol: "MRVL-USDC" }),
-  MSTR: cfg("MSTR/USD", "MSTR", "stock", "MSTR", 122, "MSTRUSDT", "MSTRUSD", "MSTR_24_5-USD", 30000014, null, "MSTR_USDT_Perp", { ondo_symbol: "MSTR-USD.P", pacifica_symbol: "MSTR", risex_market_id: 29, txflow_symbol: "MSTR-USDC" }),
+  BABA: cfg("BABA/USD", "BABA", "stock", "BABA", 177, "BABAUSDT", null, "BABA_24_5-USD", null, null, "BABA_USDT_Perp", { ondo_symbol: "BABA-USD.P", arcus_symbol: "BABA-USD" }),
+  CRCL: cfg("CRCL/USD", "CRCL", "stock", "CRCL", 121, "CRCLUSDT", "CRCLUSD", "CRCL_24_5-USD", 30000026, null, "CRCL_USDT_Perp", { ondo_symbol: "CRCL-USD.P", pacifica_symbol: "CRCL", risex_market_id: 31, txflow_symbol: "CRCL-USDC", arcus_symbol: "CRCL-USD" }),
+  MRVL: cfg("MRVL/USD", "MRVL", "stock", "MRVL", 174, "MRVLUSDT", null, "MRVL-USD", 30000077, null, "MRVL_USDT_Perp", { ondo_symbol: "MRVL-USD.P", txflow_symbol: "MRVL-USDC", arcus_symbol: "MRVL-USD" }),
+  MSTR: cfg("MSTR/USD", "MSTR", "stock", "MSTR", 122, "MSTRUSDT", "MSTRUSD", "MSTR_24_5-USD", 30000014, null, "MSTR_USDT_Perp", { ondo_symbol: "MSTR-USD.P", pacifica_symbol: "MSTR", risex_market_id: 29, txflow_symbol: "MSTR-USDC", arcus_symbol: "MSTR-USD" }),
   BB: cfg("BB/USD", "BB", "stock", "BB", 211, "BBUSDT", "BBUSD", "BB-USD", null, null, null, { ondo_symbol: "BB-USD.P" }),
-  PLTR: cfg("PLTR/USD", "PLTR", "stock", "PLTR", 111, "PLTRUSDT", "PLTRUSD", "PLTR_24_5-USD", 30000030, null, "PLTR_USDT_Perp", { ondo_symbol: "PLTR-USD.P", pacifica_symbol: "PLTR", txflow_symbol: "PLTR-USDC" }),
+  PLTR: cfg("PLTR/USD", "PLTR", "stock", "PLTR", 111, "PLTRUSDT", "PLTRUSD", "PLTR_24_5-USD", 30000030, null, "PLTR_USDT_Perp", { ondo_symbol: "PLTR-USD.P", pacifica_symbol: "PLTR", txflow_symbol: "PLTR-USDC", arcus_symbol: "PLTR-USD" }),
   AVGO: cfg("AVGO/USD", "AVGO", "stock", "AVGO", 210, "AVGOUSDT", "AVGOUSD", "AVGO-USD", 30000024, null, "AVGO_USDT_Perp", { ondo_symbol: "AVGO-USD.P", txflow_symbol: "AVGO-USDC" }),
   NFLX: cfg("NFLX/USD", "NFLX", "stock", "NFLX", null, "NFLXUSDT", "NFLXUSD", null, null, null, "NFLX_USDT_Perp", { ondo_symbol: "NFLX-USD.P" }),
-  CRWV: cfg("CRWV/USD", "CRWV", "stock", "CRWV", 167, "CRWVUSDT", null, "CRWV-USD", 30000031, null, "CRWV_USDT_Perp", { ondo_symbol: "CRWV-USD.P", risex_market_id: 45, txflow_symbol: "CRWV-USDC" }),
-  SKHY: cfg("SKHY/USD", "SKHY", "stock", "SKHY", 216, "SKHYUSDT", "SKHYUSD", "SKHY-USD", 30000087, null, "SKHY_USDT_Perp", { ondo_symbol: "SKHY-USD.P" }),
+  CRWV: cfg("CRWV/USD", "CRWV", "stock", "CRWV", 167, "CRWVUSDT", null, "CRWV-USD", 30000031, null, "CRWV_USDT_Perp", { ondo_symbol: "CRWV-USD.P", risex_market_id: 45, txflow_symbol: "CRWV-USDC", arcus_symbol: "CRWV-USD" }),
+  SKHY: cfg("SKHY/USD", "SKHY", "stock", "SKHY", 216, "SKHYUSDT", "SKHYUSD", "SKHY-USD", 30000087, null, "SKHY_USDT_Perp", { ondo_symbol: "SKHY-USD.P", arcus_symbol: "SKHY-USD" }),
 
   LLY: cfg("LLY/USD", "LLY", "stock", "LLY", null, "LLYUSDT", "LLYUSD", null, null, null, "LLY_USDT_Perp"),
-  BE: cfg("BE/USD", "BE", "stock", "BE", null, "BEUSDT", null, "BE-USD", null, null, "BE_USDT_Perp"),
+  BE: cfg("BE/USD", "BE", "stock", "BE", null, "BEUSDT", null, "BE-USD", null, null, "BE_USDT_Perp", { arcus_symbol: "BE-USD" }),
   LITE: cfg("LITE/USD", "LITE", "stock", "LITE", 178, "LITEUSDT", null, "LITE-USD", 30000033, null, "LITE_USDT_Perp", { ondo_symbol: "LITE-USD.P", txflow_symbol: "LITE-USDC" }),
   STRC: cfg("STRC/USD", "STRC", "stock", "STRC", 156, "STRCUSDT", null, null, null, null, "STRC_USDT_Perp"),
   DELL: cfg("DELL/USD", "DELL", "stock", "DELL", 187, "DELLUSDT", "DELLUSD", "DELL-USD", 30000157, null, "DELL_USDT_Perp"),
-  NBIS: cfg("NBIS/USD", "NBIS", "stock", "NBIS", 189, "NBISUSDT", "NBISUSD", "NBIS-USD", 30000142, null, "NBIS_USDT_Perp", { ondo_symbol: "NBIS-USD.P", txflow_symbol: "NBIS-USDC" }),
+  NBIS: cfg("NBIS/USD", "NBIS", "stock", "NBIS", 189, "NBISUSDT", "NBISUSD", "NBIS-USD", 30000142, null, "NBIS_USDT_Perp", { ondo_symbol: "NBIS-USD.P", txflow_symbol: "NBIS-USDC", arcus_symbol: "NBIS-USD" }),
   IREN: cfg("IREN/USD", "IREN", "stock", "IREN", null, "IRENUSDT", null, "IREN_24_5-USD", null, null, "IREN_USDT_Perp", { txflow_symbol: "IREN-USDC" }),
   ARM: cfg("ARM/USD", "ARM", "stock", "ARM", null, "ARMUSDT", "ARMUSD", "ARM-USD", 30000156, null, "ARM_USDT_Perp", { ondo_symbol: "ARM-USD.P", txflow_symbol: "ARM-USDC" }),
-  MRNA: cfg("MRNA/USD", "MRNA", "stock", "MRNA", 228, "MRNAUSDT", "MRNAUSD", "MRNA-USD", 30000159, null, "MRNA_USDT_Perp", { ondo_symbol: "MRNA-USD.P", txflow_symbol: "MRNA-USDC" }),
-  RKLB: cfg("RKLB/USD", "RKLB", "stock", "RKLB", 186, "RKLBUSDT", null, "RKLB-USD", 30000036, null, "RKLB_USDT_Perp", { txflow_symbol: "RKLB-USDC" }),
+  MRNA: cfg("MRNA/USD", "MRNA", "stock", "MRNA", 228, "MRNAUSDT", "MRNAUSD", "MRNA-USD", 30000159, null, "MRNA_USDT_Perp", { ondo_symbol: "MRNA-USD.P", txflow_symbol: "MRNA-USDC", arcus_symbol: "MRNA-USD" }),
+  RKLB: cfg("RKLB/USD", "RKLB", "stock", "RKLB", 186, "RKLBUSDT", null, "RKLB-USD", 30000036, null, "RKLB_USDT_Perp", { txflow_symbol: "RKLB-USDC", arcus_symbol: "RKLB-USD" }),
   WDC: cfg("WDC/USD", "WDC", "stock", "WDC", null, "WDCUSDT", null, "WDC-USD", 30000150, null, "WDC_USDT_Perp"),
   NOW: cfg("NOW/USD", "NOW", "stock", "NOW", 191, "NOWUSDT", null, null, null, null, "NOW_USDT_Perp"),
   AMGN: cfg("AMGN/USD", "AMGN", "stock", null, null, null, null, "AMGN-USD", null),
@@ -185,7 +188,7 @@ export const ASSETS: Record<string, AssetConfig> = {
   SOFI: cfg("SOFI/USD", "SOFI", "stock", null, null, null, null, "SOFI-USD", 30000106),
   GRAB: cfg("GRAB/USD", "GRAB", "stock", null, null, null, null, null, null),
   ASTS: cfg("ASTS/USD", "ASTS", "stock", null, null, "ASTSUSDT", null, "ASTS-USD", null, null, "ASTS_USDT_Perp", { txflow_symbol: "ASTS-USDC" }),
-  BOT: cfg("BOT/USD", "BOT", "stock", "BOT", 185, null, null, null, null),
+  BOT: cfg("BOT/USD", "BOT", "stock", "BOT", 185, null, null, null, null, null, null, { arcus_symbol: "BOT-USD" }),
 
   // Korean equities (/KRW on Veranta)
   SAMSUNGKRW: cfg("005930/KRW Samsung Electronics", "SAMSUNGKRW", "stock", null, null, null, null, null, null),

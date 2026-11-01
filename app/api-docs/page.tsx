@@ -260,6 +260,7 @@ curl "${baseUrl}/api/compare/XAU?size=100000&direction=long"`}
                 { name: "pacifica", type: "object | null", description: "Pacifica exchange result — commodities, select forex, and US equities" },
                 { name: "risex", type: "object | null", description: "RISEx exchange result — commodities, indices, and US equities" },
                 { name: "txflow", type: "object | null", description: "TxFlow exchange result — commodities, forex, indices, and US equities" },
+                { name: "arcus", type: "object | null", description: "Arcus exchange result — commodity ETFs, index ETFs, and US equities" },
               ]} />
             </Section>
 

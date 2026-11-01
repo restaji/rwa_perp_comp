@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ASSETS } from "@/lib/server/models";
 import { VariationalAPI } from "@/lib/server/exchanges/variational";
 import { VariationalSwapAPI } from "@/lib/server/exchanges/variational_swap";
+import { ArcusAPI } from "@/lib/server/exchanges/arcus";
 import { BinanceAPI } from "@/lib/server/exchanges/binance";
 import { BybitAPI } from "@/lib/server/exchanges/bybit";
 import { BitgetAPI } from "@/lib/server/exchanges/bitget";
@@ -39,6 +40,7 @@ export async function GET() {
         pacifica: Boolean(config.pacifica_symbol),
         risex: Boolean(config.risex_market_id),
         txflow: Boolean(config.txflow_symbol),
+        arcus: Boolean(config.arcus_symbol) || keyUp in ArcusAPI.SYMBOLS,
         binance: keyUp in BinanceAPI.SYMBOLS,
         bybit: keyUp in BybitAPI.SYMBOLS,
         bitget: keyUp in BitgetAPI.SYMBOLS,

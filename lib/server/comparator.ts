@@ -12,6 +12,7 @@ import { OndoAPI } from "./exchanges/ondo";
 import { PacificaAPI } from "./exchanges/pacifica";
 import { RISExAPI } from "./exchanges/risex";
 import { TxFlowAPI } from "./exchanges/txflow";
+import { ArcusAPI } from "./exchanges/arcus";
 import { BinanceAPI } from "./exchanges/binance";
 import { BybitAPI } from "./exchanges/bybit";
 import { BitgetAPI } from "./exchanges/bitget";
@@ -40,6 +41,7 @@ const ALL_VENUES = [
   "pacifica",
   "risex",
   "txflow",
+  "arcus",
   "binance",
   "bybit",
   "bitget",
@@ -56,6 +58,7 @@ const MAKER_SLIP_VENUES = [
   "pacifica",
   "risex",
   "txflow",
+  "arcus",
   "binance",
   "bybit",
   "bitget",
@@ -74,6 +77,7 @@ const DIRECTION_SLIP_VENUES = [
   "pacifica",
   "risex",
   "txflow",
+  "arcus",
   "binance",
   "bybit",
   "bitget",
@@ -93,6 +97,7 @@ export class FeeComparator {
   public pacifica = new PacificaAPI();
   public risex = new RISExAPI();
   public txflow = new TxFlowAPI();
+  public arcus = new ArcusAPI();
   public binance = new BinanceAPI();
   public bybit = new BybitAPI();
   public bitget = new BitgetAPI();
@@ -125,6 +130,7 @@ export class FeeComparator {
       pacifica: null,
       risex: null,
       txflow: null,
+      arcus: null,
       binance: null,
       bybit: null,
       bitget: null,
@@ -145,6 +151,7 @@ export class FeeComparator {
         pacifica: config.pacifica_symbol ?? null,
         risex: config.risex_market_id ? config.symbol_key : null,
         txflow: config.txflow_symbol ?? null,
+        arcus: config.arcus_symbol ?? ArcusAPI.SYMBOLS[keyUp] ?? null,
         binance: BinanceAPI.SYMBOLS[keyUp] ?? null,
         bybit: BybitAPI.SYMBOLS[keyUp] ?? null,
         bitget: BitgetAPI.SYMBOLS[keyUp] ?? null,
@@ -434,6 +441,22 @@ export class FeeComparator {
     }
   }
 
+  private async fetchArcus(
+    config: AssetConfig,
+    assetKey: string,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    const sym = config.arcus_symbol ?? ArcusAPI.SYMBOLS[assetKey.toUpperCase()];
+    if (!sym) return ["arcus", null, null];
+    try {
+      const r = await this.arcus.getOptimalExecution(sym, orderSizeUsd);
+      if (r) r.symbol = r.symbol || sym;
+      return ["arcus", r, null];
+    } catch {
+      return ["arcus", null, null];
+    }
+  }
+
   private async fetchBinance(
     assetKey: string,
     orderSizeUsd: number
@@ -523,6 +546,7 @@ export class FeeComparator {
       this.fetchPacifica(config, orderSizeUsd),
       this.fetchRisex(config, orderSizeUsd),
       this.fetchTxflow(config, orderSizeUsd),
+      this.fetchArcus(config, assetKey, orderSizeUsd),
       this.fetchBinance(assetKey, orderSizeUsd),
       this.fetchBybit(assetKey, orderSizeUsd),
       this.fetchBitget(assetKey, orderSizeUsd),
@@ -550,11 +574,12 @@ export class FeeComparator {
     orderType: string
   ): Promise<Record<string, { open: number | null; close: number | null }>> {
     const keyUp = config.symbol_key.toUpperCase();
+    const arcSym = config.arcus_symbol ?? ArcusAPI.SYMBOLS[keyUp];
     const binSym = BinanceAPI.SYMBOLS[keyUp];
     const bybSym = BybitAPI.SYMBOLS[keyUp];
     const bgtSym = BitgetAPI.SYMBOLS[keyUp];
 
-    const [hl, lt, as, ex, ed, gr, on, pa, rx, tf, bn, by, bg] =
+    const [hl, lt, as, ex, ed, gr, on, pa, rx, tf, ar, bn, by, bg] =
       await Promise.all([
         config.hyperliquid_symbol
           ? this.hyperliquid.getFees(config.hyperliquid_symbol)
@@ -586,6 +611,9 @@ export class FeeComparator {
         config.txflow_symbol
           ? this.txflow.getFees()
           : Promise.resolve<[number | null, number | null]>([null, null]),
+        arcSym
+          ? this.arcus.getFees(arcSym)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
         binSym
           ? this.binance.getFees(binSym)
           : Promise.resolve<[number | null, number | null]>([null, null]),
@@ -608,6 +636,7 @@ export class FeeComparator {
       pacifica: pa,
       risex: rx,
       txflow: tf,
+      arcus: ar,
       binance: bn,
       bybit: by,
       bitget: bg,

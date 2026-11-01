@@ -22,6 +22,7 @@ const NAV_SECTIONS = [
   { id: "pacifica", label: "Pacifica", indent: true },
   { id: "risex", label: "RISEx", indent: true },
   { id: "txflow", label: "TxFlow", indent: true },
+  { id: "arcus", label: "Arcus", indent: true },
   { id: "comparison",    label: "Exchange Comparison" },
   { id: "assets",        label: "Supported Assets" },
   { id: "limitations",   label: "Limitations" },
@@ -203,7 +204,7 @@ export default function DocsPage() {
               <div className="grid sm:grid-cols-2 gap-4 my-6">
                 <ExchangeCard 
                   name="Order Book Exchanges" 
-                  exchanges={["Hyperliquid", "Lighter", "Aster", "Extended", "EdgeX", "GRVT", "Ondo", "Pacifica", "RISEx", "TxFlow"]}
+                  exchanges={["Hyperliquid", "Lighter", "Aster", "Extended", "EdgeX", "GRVT", "Ondo", "Pacifica", "RISEx", "TxFlow", "Arcus"]}
                   description="Your order walks through available liquidity. Slippage depends on order book depth."
                 />
                 <ExchangeCard 
@@ -458,6 +459,17 @@ export default function DocsPage() {
               <ClobSlippageSection />
               <ClobFeeSection venue="TxFlow" takerBps="4.5" makerBps="1.5" />
               <ThinBookNote venue="TxFlow" />
+            </Section>
+
+            {/* Arcus */}
+            <Section id="arcus" title="Arcus" badge="Order Book">
+              <p>
+                Arcus is an order-book perpetuals DEX offering commodity ETFs (GLD, SLV, USO), index ETFs (SPY, QQQ), and US equities settled in USD.
+              </p>
+
+              <ClobSlippageSection />
+              <ClobFeeSection venue="Arcus" takerBps="2.25" makerBps="0" />
+              <ThinBookNote venue="Arcus" />
             </Section>
 
             {/* Comparison Table */}

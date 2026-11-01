@@ -25,6 +25,7 @@ const EXCHANGE_META: Record<string, { name: string; logo: string; venueType: Ven
     pacifica: { name: "Pacifica", logo: "/logos/pacifica.png", venueType: "dex" },
     risex: { name: "RISEx", logo: "/logos/risex.png", venueType: "dex" },
     txflow: { name: "TxFlow", logo: "/logos/txflow.png", venueType: "dex" },
+    arcus: { name: "Arcus", logo: "/logos/arcus.png", venueType: "dex" },
     binance: { name: "Binance", logo: "/logos/binance.png", venueType: "cex" },
     bybit: { name: "Bybit", logo: "/logos/bybit.png", venueType: "cex" },
     bitget: { name: "Bitget", logo: "/logos/bitget.png", venueType: "cex" },
@@ -105,6 +106,7 @@ interface CompareAPIResponse {
     pacifica?: ExchangeResult | null;
     risex?: ExchangeResult | null;
     txflow?: ExchangeResult | null;
+    arcus?: ExchangeResult | null;
     binance?: ExchangeResult | null;
     bybit?: ExchangeResult | null;
     bitget?: ExchangeResult | null;
