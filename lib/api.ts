@@ -20,7 +20,7 @@ const EXCHANGE_META: Record<string, { name: string; logo: string; venueType: Ven
     edgex: { name: "EdgeX", logo: "/logos/edgex.png", venueType: "dex" },
     grvt: { name: "GRVT", logo: "/logos/grvt.png", venueType: "dex" },
     variational: { name: "Variational (Perp)", logo: "/logos/variational.png", venueType: "dex" },
-    variational_swap: { name: "Variational (Swap)", logo: "/logos/variational.png", venueType: "dex" },
+    // variational_swap stays implemented in exchanges/variational_swap.ts but is unlisted.
     ondo: { name: "Ondo Perps", logo: "/logos/ondo.png", venueType: "dex" },
     pacifica: { name: "Pacifica", logo: "/logos/pacifica.png", venueType: "dex" },
     risex: { name: "RISEx", logo: "/logos/risex.png", venueType: "dex" },

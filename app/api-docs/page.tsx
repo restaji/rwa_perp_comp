@@ -255,7 +255,6 @@ curl "${baseUrl}/api/compare/XAU?size=100000&direction=long"`}
                 { name: "edgex", type: "object | null", description: "EdgeX exchange result" },
                 { name: "grvt", type: "object | null", description: "GRVT exchange result" },
                 { name: "variational", type: "object | null", description: "Variational (Perp) exchange result — commodities, indices, and US equities/ETFs; null when no live quote" },
-                { name: "variational_swap", type: "object | null", description: "Variational (Swap) exchange result — zero-funding swaps on commodities (XAUS, XAGS, USOILP, UKOILP) and indices (US500S, US100S)" },
                 { name: "ondo", type: "object | null", description: "Ondo exchange result — commodities and US equities" },
                 { name: "pacifica", type: "object | null", description: "Pacifica exchange result — commodities, select forex, and US equities" },
                 { name: "risex", type: "object | null", description: "RISEx exchange result — commodities, indices, and US equities" },

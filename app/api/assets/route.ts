@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { ASSETS } from "@/lib/server/models";
 import { VariationalAPI } from "@/lib/server/exchanges/variational";
-import { VariationalSwapAPI } from "@/lib/server/exchanges/variational_swap";
 import { ArcusAPI } from "@/lib/server/exchanges/arcus";
 import { BinanceAPI } from "@/lib/server/exchanges/binance";
 import { BybitAPI } from "@/lib/server/exchanges/bybit";
@@ -35,7 +34,7 @@ export async function GET() {
         edgex: Boolean(config.edgex_contract_id),
         grvt: Boolean(config.grvt_instrument),
         variational: keyUp in VariationalAPI.VARIATIONAL_SYMBOLS,
-        variational_swap: keyUp in VariationalSwapAPI.VARIATIONAL_SWAP_SYMBOLS,
+        variational_swap: false,
         ondo: Boolean(config.ondo_symbol),
         pacifica: Boolean(config.pacifica_symbol),
         risex: Boolean(config.risex_market_id),

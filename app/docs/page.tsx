@@ -214,7 +214,7 @@ export default function DocsPage() {
                 />
                 <ExchangeCard 
                   name="Quote-Based (RFQ)" 
-                  exchanges={["Variational (Perp)", "Variational (Swap)"]}
+                  exchanges={["Variational (Perp)"]}
                   description="A single liquidity provider publishes executable bid/ask quotes at fixed size buckets. There are no trading fees — the spread is the only cost."
                 />
               </div>

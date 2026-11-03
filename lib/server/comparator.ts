@@ -36,7 +36,6 @@ const ALL_VENUES = [
   "edgex",
   "grvt",
   "variational",
-  "variational_swap",
   "ondo",
   "pacifica",
   "risex",
@@ -72,7 +71,6 @@ const DIRECTION_SLIP_VENUES = [
   "edgex",
   "grvt",
   "variational",
-  "variational_swap",
   "ondo",
   "pacifica",
   "risex",
@@ -92,6 +90,7 @@ export class FeeComparator {
   public edgex = new EdgeXAPI();
   public grvt = new GRVTAPI();
   public variational = new VariationalAPI();
+  // Kept wired while Variational Swap is unlisted. exchanges/variational_swap.ts stays.
   public variationalSwap = new VariationalSwapAPI(this.variational);
   public ondo = new OndoAPI();
   public pacifica = new PacificaAPI();
@@ -343,26 +342,9 @@ export class FeeComparator {
     }
   }
 
-  private async fetchVariationalSwap(
-    assetKey: string,
-    orderSizeUsd: number,
-    isLong: boolean
-  ): Promise<[string, any, any]> {
-    if (
-      !(assetKey.toUpperCase() in VariationalSwapAPI.VARIATIONAL_SWAP_INSTRUMENTS)
-    ) {
-      return ["variational_swap", null, null];
-    }
-    try {
-      const r = await this.variationalSwap.calculateCost(
-        assetKey,
-        orderSizeUsd,
-        isLong
-      );
-      return ["variational_swap", r, null];
-    } catch {
-      return ["variational_swap", null, null];
-    }
+  private async fetchVariationalSwap(): Promise<[string, any, any]> {
+    // Unlisted. exchanges/variational_swap.ts is kept; quote fetch stays off until re-enabled.
+    return ["variational_swap", null, null];
   }
 
   private async fetchOndo(
@@ -529,7 +511,7 @@ export class FeeComparator {
       orderType,
       direction,
       VariationalAPI.VARIATIONAL_SYMBOLS[assetKey.toUpperCase()] || null,
-      VariationalSwapAPI.VARIATIONAL_SWAP_SYMBOLS[assetKey.toUpperCase()] || null
+      null
     );
 
     const results = await Promise.all([
@@ -541,7 +523,7 @@ export class FeeComparator {
       this.fetchEdgex(config, orderSizeUsd, direction),
       this.fetchGrvt(config, orderSizeUsd, direction),
       this.fetchVariational(assetKey, orderSizeUsd, isLong),
-      this.fetchVariationalSwap(assetKey, orderSizeUsd, isLong),
+      this.fetchVariationalSwap(),
       this.fetchOndo(config, orderSizeUsd),
       this.fetchPacifica(config, orderSizeUsd),
       this.fetchRisex(config, orderSizeUsd),
