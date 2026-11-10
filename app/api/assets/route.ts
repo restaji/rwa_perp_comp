@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ASSETS } from "@/lib/server/models";
 import { VariationalAPI } from "@/lib/server/exchanges/variational";
 import { ArcusAPI } from "@/lib/server/exchanges/arcus";
+import { BulletAPI } from "@/lib/server/exchanges/bullet";
 import { BinanceAPI } from "@/lib/server/exchanges/binance";
 import { BybitAPI } from "@/lib/server/exchanges/bybit";
 import { BitgetAPI } from "@/lib/server/exchanges/bitget";
@@ -40,6 +41,7 @@ export async function GET() {
         risex: Boolean(config.risex_market_id),
         txflow: Boolean(config.txflow_symbol),
         arcus: Boolean(config.arcus_symbol) || keyUp in ArcusAPI.SYMBOLS,
+        bullet: Boolean(config.bullet_symbol) || keyUp in BulletAPI.SYMBOLS,
         binance: keyUp in BinanceAPI.SYMBOLS,
         bybit: keyUp in BybitAPI.SYMBOLS,
         bitget: keyUp in BitgetAPI.SYMBOLS,

@@ -23,6 +23,7 @@ const NAV_SECTIONS = [
   { id: "risex", label: "RISEx", indent: true },
   { id: "txflow", label: "TxFlow", indent: true },
   { id: "arcus", label: "Arcus", indent: true },
+  { id: "bullet", label: "Bullet", indent: true },
   { id: "comparison",    label: "Exchange Comparison" },
   { id: "assets",        label: "Supported Assets" },
   { id: "limitations",   label: "Limitations" },
@@ -204,7 +205,7 @@ export default function DocsPage() {
               <div className="grid sm:grid-cols-2 gap-4 my-6">
                 <ExchangeCard 
                   name="Order Book Exchanges" 
-                  exchanges={["Hyperliquid", "Lighter", "Aster", "Extended", "EdgeX", "GRVT", "Ondo", "Pacifica", "RISEx", "TxFlow", "Arcus"]}
+                  exchanges={["Hyperliquid", "Lighter", "Aster", "Extended", "EdgeX", "GRVT", "Ondo", "Pacifica", "RISEx", "TxFlow", "Arcus", "Bullet"]}
                   description="Your order walks through available liquidity. Slippage depends on order book depth."
                 />
                 <ExchangeCard 
@@ -470,6 +471,17 @@ export default function DocsPage() {
               <ClobSlippageSection />
               <ClobFeeSection venue="Arcus" takerBps="2.25" makerBps="0" />
               <ThinBookNote venue="Arcus" />
+            </Section>
+
+            {/* Bullet */}
+            <Section id="bullet" title="Bullet" badge="Order Book">
+              <p>
+                Bullet is an on-chain rollup CLOB perpetuals DEX offering commodities (Gold, Silver, WTI, Brent), US indices (US500, US100), and US/KR equities settled in USD.
+              </p>
+
+              <ClobSlippageSection />
+              <ClobFeeSection venue="Bullet" takerBps="0" makerBps="0" />
+              <ThinBookNote venue="Bullet" />
             </Section>
 
             {/* Comparison Table */}

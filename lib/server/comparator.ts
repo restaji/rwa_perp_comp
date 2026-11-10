@@ -13,6 +13,7 @@ import { PacificaAPI } from "./exchanges/pacifica";
 import { RISExAPI } from "./exchanges/risex";
 import { TxFlowAPI } from "./exchanges/txflow";
 import { ArcusAPI } from "./exchanges/arcus";
+import { BulletAPI } from "./exchanges/bullet";
 import { BinanceAPI } from "./exchanges/binance";
 import { BybitAPI } from "./exchanges/bybit";
 import { BitgetAPI } from "./exchanges/bitget";
@@ -41,6 +42,7 @@ const ALL_VENUES = [
   "risex",
   "txflow",
   "arcus",
+  "bullet",
   "binance",
   "bybit",
   "bitget",
@@ -58,6 +60,7 @@ const MAKER_SLIP_VENUES = [
   "risex",
   "txflow",
   "arcus",
+  "bullet",
   "binance",
   "bybit",
   "bitget",
@@ -76,6 +79,7 @@ const DIRECTION_SLIP_VENUES = [
   "risex",
   "txflow",
   "arcus",
+  "bullet",
   "binance",
   "bybit",
   "bitget",
@@ -97,6 +101,7 @@ export class FeeComparator {
   public risex = new RISExAPI();
   public txflow = new TxFlowAPI();
   public arcus = new ArcusAPI();
+  public bullet = new BulletAPI();
   public binance = new BinanceAPI();
   public bybit = new BybitAPI();
   public bitget = new BitgetAPI();
@@ -130,6 +135,7 @@ export class FeeComparator {
       risex: null,
       txflow: null,
       arcus: null,
+      bullet: null,
       binance: null,
       bybit: null,
       bitget: null,
@@ -151,6 +157,7 @@ export class FeeComparator {
         risex: config.risex_market_id ? config.symbol_key : null,
         txflow: config.txflow_symbol ?? null,
         arcus: config.arcus_symbol ?? ArcusAPI.SYMBOLS[keyUp] ?? null,
+        bullet: config.bullet_symbol ?? BulletAPI.SYMBOLS[keyUp] ?? null,
         binance: BinanceAPI.SYMBOLS[keyUp] ?? null,
         bybit: BybitAPI.SYMBOLS[keyUp] ?? null,
         bitget: BitgetAPI.SYMBOLS[keyUp] ?? null,
@@ -439,6 +446,23 @@ export class FeeComparator {
     }
   }
 
+  private async fetchBullet(
+    config: AssetConfig,
+    assetKey: string,
+    orderSizeUsd: number
+  ): Promise<[string, any, any]> {
+    const sym =
+      config.bullet_symbol ?? BulletAPI.SYMBOLS[assetKey.toUpperCase()];
+    if (!sym) return ["bullet", null, null];
+    try {
+      const r = await this.bullet.getOptimalExecution(sym, orderSizeUsd);
+      if (r) r.symbol = r.symbol || sym;
+      return ["bullet", r, null];
+    } catch {
+      return ["bullet", null, null];
+    }
+  }
+
   private async fetchBinance(
     assetKey: string,
     orderSizeUsd: number
@@ -529,6 +553,7 @@ export class FeeComparator {
       this.fetchRisex(config, orderSizeUsd),
       this.fetchTxflow(config, orderSizeUsd),
       this.fetchArcus(config, assetKey, orderSizeUsd),
+      this.fetchBullet(config, assetKey, orderSizeUsd),
       this.fetchBinance(assetKey, orderSizeUsd),
       this.fetchBybit(assetKey, orderSizeUsd),
       this.fetchBitget(assetKey, orderSizeUsd),
@@ -557,11 +582,12 @@ export class FeeComparator {
   ): Promise<Record<string, { open: number | null; close: number | null }>> {
     const keyUp = config.symbol_key.toUpperCase();
     const arcSym = config.arcus_symbol ?? ArcusAPI.SYMBOLS[keyUp];
+    const bulSym = config.bullet_symbol ?? BulletAPI.SYMBOLS[keyUp];
     const binSym = BinanceAPI.SYMBOLS[keyUp];
     const bybSym = BybitAPI.SYMBOLS[keyUp];
     const bgtSym = BitgetAPI.SYMBOLS[keyUp];
 
-    const [hl, lt, as, ex, ed, gr, on, pa, rx, tf, ar, bn, by, bg] =
+    const [hl, lt, as, ex, ed, gr, on, pa, rx, tf, ar, bu, bn, by, bg] =
       await Promise.all([
         config.hyperliquid_symbol
           ? this.hyperliquid.getFees(config.hyperliquid_symbol)
@@ -596,6 +622,9 @@ export class FeeComparator {
         arcSym
           ? this.arcus.getFees(arcSym)
           : Promise.resolve<[number | null, number | null]>([null, null]),
+        bulSym
+          ? this.bullet.getFees(bulSym)
+          : Promise.resolve<[number | null, number | null]>([null, null]),
         binSym
           ? this.binance.getFees(binSym)
           : Promise.resolve<[number | null, number | null]>([null, null]),
@@ -619,6 +648,7 @@ export class FeeComparator {
       risex: rx,
       txflow: tf,
       arcus: ar,
+      bullet: bu,
       binance: bn,
       bybit: by,
       bitget: bg,
